@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+
+# Never commit the Google key. Both scripts read it from the environment.
+.env
+.env.local
+*.key

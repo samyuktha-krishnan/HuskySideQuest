@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SideQuest UW</title>
+<meta name="description" content="You have a gap between classes. Get one thing you can actually finish and get back from.">
+<meta name="theme-color" content="#4B2E83">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="src/ui/styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="mast">
+    <span class="name">SideQuest</span>
+    <span class="place">UW</span>
+    <span class="meta"><span id="tick">--:--</span> <span id="freshness">57 places</span></span>
+  </header>
+
+  <p class="lead">You have a gap between classes. <span>Tell us how long, and get one thing you can actually finish and get back from.</span></p>
+
+  <main>
+    <form id="form" autocomplete="off">
+      <div class="row">
+        <span class="k" id="k-gap">Gap</span>
+        <div class="v" role="group" aria-labelledby="k-gap" id="v-gap"></div>
+      </div>
+      <div class="row">
+        <span class="k" id="k-budget">Budget</span>
+        <div class="v" role="group" aria-labelledby="k-budget" id="v-budget"></div>
+      </div>
+      <div class="row">
+        <span class="k" id="k-mood">Mood</span>
+        <div class="v" role="group" aria-labelledby="k-mood" id="v-mood"></div>
+      </div>
+      <div class="row">
+        <span class="k" id="k-setting">Setting</span>
+        <div class="v" role="group" aria-labelledby="k-setting" id="v-setting"></div>
+      </div>
+      <div class="row">
+        <label class="k" for="where">Right now</label>
+        <div class="v">
+          <input type="text" id="where" list="places" placeholder="Mary Gates, MGH, the HUB…"
+                 aria-describedby="resolved">
+          <datalist id="places"></datalist>
+          <p class="resolved" id="resolved"></p>
+        </div>
+      </div>
+      <div class="row">
+        <label class="k" for="clock">Leaving at</label>
+        <div class="v"><input type="time" id="clock"></div>
+      </div>
+
+      <button class="go" type="submit" id="go">Find me something</button>
+    </form>
+
+  </main>
+</div>
+
+<section id="out" aria-live="polite"></section>
+
+<div class="wrap">
+  <footer>
+    <p>Walking times come from straight-line distance with a detour factor, so treat them as &plusmn;3 minutes. Opening hours are category estimates, not verified per venue &mdash; check before you commit to anything that closes.</p>
+    <p>No accounts, no tracking. Your filters are stored in your own browser and nowhere else.</p>
+  </footer>
+</div>
+<script type="module" src="src/ui/app.js"></script>
+<script>
+  // Offline support. Harmless where it isn't available (file://, older browsers).
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
+</script>
+</body>
+</html>
