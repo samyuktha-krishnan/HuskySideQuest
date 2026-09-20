@@ -4,7 +4,7 @@ You get let out of a lecture with 45 minutes before the next one. Not enough to 
 
 SideQuest UW asks four questions and gives you one thing to do that you can actually finish and get back from. It shows you the arithmetic, because the point is not another list of recommendations, it's proof you have time.
 
-### → https://samyuktha-krishnan.github.io/sidequest-uw/
+### → [https://samyuktha-krishnan.github.io/sidequest-uw/](https://samyuktha-krishnan.github.io/HuskySideQuest/)
 
 Open it in any browser on any device. Nothing to install, no account, no sign-in.
 On a phone, "Add to Home Screen" gives it an icon and opens it fullscreen like
