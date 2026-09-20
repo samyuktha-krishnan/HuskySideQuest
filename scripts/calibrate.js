@@ -1,0 +1,150 @@
+// Fit the walking model against real Google walking routes.
+//
+//   GOOGLE_MAPS_API_KEY=... npm run calibrate
+//   npm run calibrate -- --dry-run
+//
+// Model: straight-line metres * factor / speed. We guessed 1.32 and knew it
+// ran long (Red Square -> Ravenna: 31 min predicted, 25 real).
+//
+// A constant, not a full matrix: 87 starts x 57 quests is 4,959 elements to
+// refetch whenever anyone adds a building. ~60 routes pin the factor and the
+// app stays offline. A pair still wrong after this wants a per-quest override.
+
+import { writeFileSync, readFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { QUESTS } from "../src/data/quests.js";
+import { STARTS } from "../src/data/starts.js";
+import { haversine } from "../src/lib/travel.js";
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const KEY = process.env.GOOGLE_MAPS_API_KEY;
+const dryRun = process.argv.includes("--dry-run");
+const SPEED = 78;               // metres per minute; the other half of the model
+
+// Sample the whole distance range, not just short campus hops.
+function sample() {
+  const pairs = [];
+  for (const s of STARTS) {
+    for (const q of QUESTS) {
+      if (q.via) continue;                      // transit legs aren't walking
+      const metres = haversine(s, q);
+      if (metres < 150) continue;               // too short to measure usefully
+      pairs.push({ from: s, to: q, metres });
+    }
+  }
+  pairs.sort((a, b) => a.metres - b.metres);
+
+  // Endpoints included. Stride-then-slice looks equivalent and isn't: it
+  // stops a quarter of the way along and never sees a long walk.
+  const want = Math.min(60, pairs.length);
+  const step = (pairs.length - 1) / (want - 1);
+  return Array.from({ length: want }, (_, i) => pairs[Math.round(i * step)]);
+}
+
+const pairs = sample();
+
+if (dryRun) {
+  console.log(`Would request ${pairs.length} walking routes, spanning ` +
+    `${Math.round(pairs[0].metres)}m to ${Math.round(pairs[pairs.length - 1].metres)}m:\n`);
+  for (const p of pairs.slice(0, 8)) {
+    console.log(`  ${p.from.id.padEnd(9)} -> ${p.to.id.padEnd(14)} ${Math.round(p.metres)}m straight`);
+  }
+  console.log(`  ... and ${pairs.length - 8} more`);
+  process.exit(0);
+}
+
+if (!KEY) {
+  console.error("Set GOOGLE_MAPS_API_KEY, or pass --dry-run.");
+  process.exit(1);
+}
+
+async function routeMatrix(chunk) {
+  const res = await fetch("https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": KEY,
+      "X-Goog-FieldMask": "originIndex,destinationIndex,duration,distanceMeters,condition",
+    },
+    body: JSON.stringify({
+      origins: chunk.map((p) => ({
+        waypoint: { location: { latLng: { latitude: p.from.lat, longitude: p.from.lng } } },
+      })),
+      destinations: chunk.map((p) => ({
+        waypoint: { location: { latLng: { latitude: p.to.lat, longitude: p.to.lng } } },
+      })),
+      travelMode: "WALK",
+    }),
+  });
+  if (!res.ok) throw new Error(`computeRouteMatrix ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+// The API is origins x destinations, so batch and keep the diagonal.
+const measured = [];
+const BATCH = 8;
+for (let i = 0; i < pairs.length; i += BATCH) {
+  const chunk = pairs.slice(i, i + BATCH);
+  try {
+    const rows = await routeMatrix(chunk);
+    for (const row of rows) {
+      if (row.originIndex !== row.destinationIndex) continue;
+      if (row.condition && row.condition !== "ROUTE_EXISTS") continue;
+      const p = chunk[row.originIndex];
+      const mins = parseFloat(String(row.duration).replace("s", "")) / 60;
+      measured.push({ ...p, realMinutes: mins, realMetres: row.distanceMeters });
+    }
+  } catch (err) {
+    console.error(`  batch ${i / BATCH}: ${err.message}`);
+  }
+}
+
+if (measured.length < 10) {
+  console.error(`Only ${measured.length} routes came back — not enough to fit anything.`);
+  process.exit(1);
+}
+
+// Median of the factor that would have made each prediction exact, so one
+// closed bridge can't drag it.
+const factors = measured
+  .map((m) => (m.realMinutes * SPEED) / m.metres)
+  .sort((a, b) => a - b);
+const median = (a) => a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2;
+const factor = +median(factors).toFixed(3);
+
+const errors = measured
+  .map((m) => Math.abs(Math.round((m.metres * factor) / SPEED) - m.realMinutes))
+  .sort((a, b) => a - b);
+const medianError = +median(errors).toFixed(2);
+const worst = measured
+  .map((m) => ({ ...m, err: Math.round((m.metres * factor) / SPEED) - m.realMinutes }))
+  .sort((a, b) => Math.abs(b.err) - Math.abs(a.err))
+  .slice(0, 5);
+
+writeFileSync(resolve(root, "src/data/calibration.js"),
+`// Calibration of the walking model against real Google walking routes.
+// Owner: dataset.
+//
+// GENERATED by scripts/calibrate.js. Don't hand-edit — rerun \`npm run calibrate\`.
+
+export const CALIBRATION = {
+  factor: ${factor},
+  speedMetresPerMinute: ${SPEED},
+  source: "google-routes",
+  fittedAt: ${JSON.stringify(new Date().toISOString().slice(0, 10))},
+  samples: ${measured.length},
+  medianErrorMinutes: ${medianError},
+};
+`);
+
+console.log(`\nFitted against ${measured.length} real walking routes.`);
+console.log(`  detour factor : 1.32 (guessed) -> ${factor}`);
+console.log(`  median error  : ${medianError} min`);
+console.log(`\nStill worst after fitting:`);
+for (const w of worst) {
+  console.log(`  ${w.from.id.padEnd(9)} -> ${w.to.id.padEnd(14)} ` +
+    `off by ${w.err > 0 ? "+" : ""}${w.err.toFixed(1)} min`);
+}
+console.log(`\nAnything consistently off by 4+ minutes wants a per-quest override,\n` +
+  `not another calibration run.`);

@@ -1,0 +1,15 @@
+{
+  "name": "SideQuest UW",
+  "short_name": "SideQuest",
+  "description": "One thing to do with the gap between your classes.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FCFCFB",
+  "theme_color": "#4B2E83",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

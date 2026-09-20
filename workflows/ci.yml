@@ -1,0 +1,29 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm test
+
+      # The node suite can't catch a broken bundle — see TESTING.md round 6 —
+      # so build and drive the real page too.
+      - run: npm run build
+      - run: pip install playwright && playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 8123 &
+          sleep 2
+          python3 test/browser_check.py
+
+      # A dist/ that doesn't match src/ means someone forgot to rebuild.
+      - run: git diff --exit-code dist/ || (echo "::error::dist is stale — run npm run build" && exit 1)

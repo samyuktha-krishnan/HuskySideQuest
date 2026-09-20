@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SideQuest UW</title>
+<meta name="description" content="You have a gap between classes. Get one thing you can actually finish and get back from.">
+<meta name="theme-color" content="#4B2E83">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* SideQuest UW — interface styles. Owner: interface.
+   One typeface, strict scale, almost no colour. Structure from hairlines and
+   a label column, not cards or pills. Only the selected-option underline and
+   the Maps button are saturated. */
+
+:root{
+  --paper:#FCFCFB;
+  --ink:#191622;
+  --mute:#6F6980;      /* 5.1:1 on paper; #857F93 was 3.75 and failed */
+  --line:#E7E4EC;
+  --line-strong:#CFCAD8;
+  --accent:#4B2E83;
+  --on-accent:#FCFCFB;
+
+  --t-xs:.78rem;
+  --t-sm:.875rem;
+  --t-base:1rem;
+  --t-lead:clamp(1.22rem,3.4vw,1.5rem);
+  --t-quest:clamp(1.85rem,6vw,2.6rem);
+
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F0D14; --ink:#ECE9F2; --mute:#8B8599; --line:#272332;
+    --line-strong:#3A3549; --accent:#B79BF0; --on-accent:#14111C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F0D14; --ink:#ECE9F2; --mute:#8B8599; --line:#272332;
+  --line-strong:#3A3549; --accent:#B79BF0; --on-accent:#14111C;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Schibsted Grotesk","Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:var(--t-base);
+  font-weight:400;
+  line-height:1.55;
+  font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:660px;margin:0 auto;padding:40px 24px 80px}
+
+.mast{display:flex;align-items:baseline;gap:8px;margin-bottom:44px}
+.mast .name{font-size:var(--t-sm);font-weight:500;letter-spacing:-.01em}
+.mast .place{font-size:var(--t-sm);color:var(--accent);font-weight:500}
+.mast .meta{margin-left:auto;font-size:var(--t-xs);color:var(--mute)}
+
+.lead{
+  font-size:var(--t-lead);
+  font-weight:400;
+  line-height:1.32;
+  letter-spacing:-.018em;
+  max-width:27ch;
+  margin:0 0 40px;
+}
+.lead span{color:var(--mute)}
+
+.row{
+  display:grid;
+  grid-template-columns:96px minmax(0,1fr);
+  gap:4px 20px;
+  align-items:baseline;
+  padding:15px 0;
+  border-top:1px solid var(--line);
+}
+.row:last-of-type{border-bottom:1px solid var(--line)}
+.row > .k{font-size:var(--t-xs);color:var(--mute);line-height:1.9}
+.row > .v{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 20px}
+@media (max-width:560px){
+  .row{grid-template-columns:1fr;padding:13px 0}
+  .row > .k{line-height:1.5;margin-bottom:2px}
+  .row > .v{gap:2px 18px}
+}
+
+.opt{
+  font:inherit;
+  font-size:var(--t-sm);
+  color:var(--mute);
+  background:none;
+  border:0;
+  border-bottom:1px solid transparent;
+  padding:3px 0;
+  cursor:pointer;
+  transition:color .12s;
+}
+.opt:hover{color:var(--ink)}
+.opt[aria-pressed="true"]{color:var(--ink);font-weight:500;border-bottom-color:var(--accent)}
+
+input[type="text"],input[type="time"]{
+  font:inherit;
+  font-size:var(--t-sm);
+  color:var(--ink);
+  background:none;
+  border:0;
+  border-bottom:1px solid var(--line-strong);
+  padding:4px 0;
+  width:100%;
+  max-width:300px;
+  border-radius:0;
+}
+input[type="time"]{max-width:120px}
+input::placeholder{color:var(--mute)}
+input:focus{outline:none;border-bottom-color:var(--accent)}
+
+.resolved{font-size:var(--t-xs);color:var(--mute);margin-top:7px;width:100%}
+.resolved:empty{display:none;margin:0}
+.resolved b{color:var(--ink);font-weight:500}
+.guesses{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;width:100%}
+.guesses button{
+  font:inherit;font-size:var(--t-xs);color:var(--accent);
+  background:none;border:0;border-bottom:1px solid var(--line-strong);
+  padding:2px 0;cursor:pointer;
+}
+.guesses button:hover{border-bottom-color:var(--accent)}
+
+.go{
+  font:inherit;
+  font-size:var(--t-sm);
+  font-weight:500;
+  margin-top:32px;
+  padding:13px 30px;
+  border:0;
+  border-radius:2px;
+  background:var(--ink);
+  color:var(--paper);
+  cursor:pointer;
+  transition:opacity .12s;
+}
+.go:hover{opacity:.85}
+
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+#out:not(:empty){margin-top:56px}
+@media (prefers-reduced-motion:no-preference){
+  .result{animation:settle .3s ease-out}
+}
+@keyframes settle{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.tags{font-size:var(--t-xs);color:var(--mute);margin:0 0 14px}
+.tags i{font-style:normal;color:var(--accent)}
+.tags s{text-decoration:none;color:var(--line-strong);margin:0 8px}
+
+.result h2{
+  font-size:var(--t-quest);
+  font-weight:400;
+  line-height:1.1;
+  letter-spacing:-.032em;
+  margin:0;
+  max-width:18ch;
+}
+.fallback{font-size:var(--t-sm);color:var(--mute);margin:16px 0 0;max-width:46ch}
+.blurb{margin:18px 0 0;max-width:44ch}
+
+.gap-bar{display:flex;height:3px;margin:38px 0 0;background:var(--line)}
+.gap-bar span{display:block;height:3px}
+.gap-bar .walk{background:var(--line-strong)}
+.gap-bar .stay{background:var(--accent)}
+.gap-bar .spare{background:transparent}
+.clock{display:flex;justify-content:space-between;gap:12px;
+  font-size:var(--t-xs);color:var(--mute);margin-top:10px}
+.clock b{color:var(--ink);font-weight:500}
+
+.facts{
+  display:flex;flex-wrap:wrap;gap:0 28px;
+  margin:30px 0 0;padding:16px 0;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  font-size:var(--t-sm);
+}
+.facts .n{font-weight:500}
+.facts .k{color:var(--mute);font-size:var(--t-xs);display:block;line-height:1.7}
+
+.tip{margin:24px 0 0;max-width:46ch;font-size:var(--t-sm);color:var(--mute)}
+.tip b{color:var(--ink);font-weight:500}
+
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:24px;margin-top:30px}
+.go-maps{
+  font-size:var(--t-sm);font-weight:500;color:var(--on-accent);background:var(--accent);
+  text-decoration:none;padding:11px 24px;border-radius:2px;
+}
+.again{
+  font:inherit;font-size:var(--t-sm);color:var(--mute);background:none;
+  border:0;border-bottom:1px solid var(--line-strong);padding:3px 0;cursor:pointer;
+}
+.again:hover{color:var(--ink);border-bottom-color:var(--ink)}
+
+.why{margin-top:26px}
+.why summary{cursor:pointer;color:var(--mute);font-size:var(--t-xs)}
+.why ul{list-style:none;margin:14px 0 0;padding:0;max-width:36ch}
+.why li{display:flex;justify-content:space-between;gap:16px;color:var(--mute);
+  font-size:var(--t-xs);padding:5px 0;border-bottom:1px solid var(--line)}
+.why li b{color:var(--ink);font-weight:500}
+
+.alts{margin-top:52px}
+.alts .k{font-size:var(--t-xs);color:var(--mute);margin-bottom:2px}
+.alt{
+  display:flex;justify-content:space-between;align-items:baseline;gap:20px;
+  width:100%;text-align:left;font:inherit;font-size:var(--t-sm);
+  color:var(--ink);background:none;border:0;border-top:1px solid var(--line);
+  padding:13px 0;cursor:pointer;
+}
+.alt:last-of-type{border-bottom:1px solid var(--line)}
+.alt:hover .an{color:var(--accent)}
+.an{transition:color .12s;min-width:0}
+.am{color:var(--mute);font-size:var(--t-xs);white-space:nowrap}
+
+.empty{padding:22px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.empty b{display:block;font-weight:500;margin-bottom:6px}
+.empty p{margin:0 0 16px;color:var(--mute);font-size:var(--t-sm);max-width:44ch}
+
+footer{margin-top:72px;padding-top:20px;border-top:1px solid var(--line);
+  font-size:var(--t-xs);color:var(--mute);max-width:52ch}
+footer p{margin:0 0 8px}
+
+/* ---------- v2: mono data, full-bleed result panel ---------- */
+:root{
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --panel-bg:#4B2E83;
+  --panel-fg:#FCFCFB;
+  --panel-dim:#C9BCE8;
+  --panel-rule:#6A4FA0;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --panel-bg:#2B1D55; --panel-fg:#F1EDF9; --panel-dim:#BCAEE0; --panel-rule:#463473;
+  }
+}
+:root[data-theme="dark"]{
+  --panel-bg:#2B1D55; --panel-fg:#F1EDF9; --panel-dim:#BCAEE0; --panel-rule:#463473;
+}
+
+.mast .meta{font-family:var(--mono);font-size:.72rem;letter-spacing:-.02em}
+#tick{color:var(--accent)}
+
+.opt{font-variant-numeric:tabular-nums}
+input[type="time"]{font-family:var(--mono);letter-spacing:-.02em}
+
+/* the result breaks out of the column and floods */
+#out{margin:0;padding:0}
+#out:not(:empty){margin-top:56px}
+.panel{background:var(--panel-bg);color:var(--panel-fg);padding:46px 24px 40px}
+.panel-in{max-width:660px;margin:0 auto}
+
+.idx{
+  font-family:var(--mono);font-size:.72rem;color:var(--panel-dim);
+  display:flex;justify-content:space-between;gap:16px;
+  padding-bottom:12px;margin-bottom:22px;border-bottom:1px solid var(--panel-rule);
+}
+.panel .tags{color:var(--panel-dim);margin:0 0 12px;font-family:var(--mono);font-size:.72rem}
+.panel .tags i{color:var(--panel-fg);font-style:normal}
+.panel .tags s{color:var(--panel-rule)}
+.panel h2{color:var(--panel-fg);max-width:16ch;font-size:clamp(2rem,7vw,3.1rem)}
+.panel .blurb{color:var(--panel-dim);max-width:46ch}
+.panel .fallback{color:var(--panel-dim);border:0;padding:0}
+
+.panel .gap-bar{background:var(--panel-rule);height:4px;margin-top:40px}
+.panel .gap-bar span{height:4px}
+.panel .gap-bar .walk{background:var(--panel-dim)}
+.panel .gap-bar .stay{background:var(--panel-fg)}
+.panel .clock{
+  font-family:var(--mono);font-size:.72rem;color:var(--panel-dim);
+  letter-spacing:-.02em;margin-top:11px;
+}
+.panel .clock b{color:var(--panel-fg);font-weight:500}
+
+.panel .facts{
+  border-color:var(--panel-rule);margin-top:34px;gap:0 34px;
+  font-family:var(--mono);font-size:.78rem;letter-spacing:-.02em;
+}
+.panel .facts .n{color:var(--panel-fg);font-weight:500;font-size:1.05rem}
+.panel .facts .k{color:var(--panel-dim);font-family:var(--mono);font-size:.68rem}
+
+.panel .tip{color:var(--panel-dim);max-width:46ch}
+.panel .tip b{color:var(--panel-fg)}
+
+.panel .go-maps{background:var(--panel-fg);color:var(--panel-bg)}
+.panel .again{color:var(--panel-dim);border-bottom-color:var(--panel-rule)}
+.panel .again:hover{color:var(--panel-fg);border-bottom-color:var(--panel-fg)}
+.panel .why summary{color:var(--panel-dim);font-family:var(--mono)}
+.panel .why li{border-color:var(--panel-rule);color:var(--panel-dim)}
+.panel .why li b{color:var(--panel-fg);font-family:var(--mono)}
+
+/* alternates back on paper, numbered */
+.alts{max-width:660px;margin:0 auto;padding:44px 24px 0}
+.alt{gap:16px;align-items:baseline}
+.alt .no{font-family:var(--mono);font-size:.72rem;color:var(--mute);flex:0 0 auto}
+.am{font-family:var(--mono);letter-spacing:-.02em}
+
+.empty{max-width:660px;margin:0 auto;padding:22px 24px}
+
+.alt .an{flex:1 1 auto;text-align:left}
+body > .wrap:first-of-type{padding-bottom:40px}
+#out:not(:empty){margin-top:0}
+.panel .actions{margin-top:34px}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="mast">
+    <span class="name">SideQuest</span>
+    <span class="place">UW</span>
+    <span class="meta"><span id="tick">--:--</span> <span id="freshness">57 places</span></span>
+  </header>
+
+  <p class="lead">You have a gap between classes. <span>Tell us how long, and get one thing you can actually finish and get back from.</span></p>
+
+  <main>
+    <form id="form" autocomplete="off">
+      <div class="row">
+        <span class="k" id="k-gap">Gap</span>
+        <div class="v" role="group" aria-labelledby="k-gap" id="v-gap"></div>
+      </div>
+      <div class="row">
+        <span class="k" id="k-budget">Budget</span>
+        <div class="v" role="group" aria-labelledby="k-budget" id="v-budget"></div>
+      </div>
+      <div class="row">
+        <span class="k" id="k-mood">Mood</span>
+        <div class="v" role="group" aria-labelledby="k-mood" id="v-mood"></div>
+      </div>
+      <div class="row">
+        <span class="k" id="k-setting">Setting</span>
+        <div class="v" role="group" aria-labelledby="k-setting" id="v-setting"></div>
+      </div>
+      <div class="row">
+        <label class="k" for="where">Right now</label>
+        <div class="v">
+          <input type="text" id="where" list="places" placeholder="Mary Gates, MGH, the HUB…"
+                 aria-describedby="resolved">
+          <datalist id="places"></datalist>
+          <p class="resolved" id="resolved"></p>
+        </div>
+      </div>
+      <div class="row">
+        <label class="k" for="clock">Leaving at</label>
+        <div class="v"><input type="time" id="clock"></div>
+      </div>
+
+      <button class="go" type="submit" id="go">Find me something</button>
+    </form>
+
+  </main>
+</div>
+
+<section id="out" aria-live="polite"></section>
+
+<div class="wrap">
+  <footer>
+    <p>Walking times come from straight-line distance with a detour factor, so treat them as &plusmn;3 minutes. Opening hours are category estimates, not verified per venue &mdash; check before you commit to anything that closes.</p>
+    <p>No accounts, no tracking. Your filters are stored in your own browser and nowhere else.</p>
+  </footer>
+</div>
+<script>
+(function(){
+"use strict";
+/* ---------- src/data/starts.js ---------- */
+// Default start points. Free text goes through places.js instead.
+// Owner: dataset + recommendation logic.
+/* Starting points: places you actually get let out of a class. */
+const STARTS = [
+  { id:"red",    name:"Red Square / Suzzallo",        lat:47.6558, lng:-122.3089 },
+  { id:"odeg",   name:"Odegaard Library",             lat:47.6566, lng:-122.3105 },
+  { id:"hub",    name:"The HUB",                      lat:47.6553, lng:-122.3050 },
+  { id:"quad",   name:"The Quad / Mary Gates",        lat:47.6570, lng:-122.3073 },
+  { id:"south",  name:"Health Sciences (south campus)",lat:47.6510, lng:-122.3085 },
+  { id:"west",   name:"West Campus dorms",            lat:47.6549, lng:-122.3160 },
+  { id:"north",  name:"North Campus dorms",           lat:47.6603, lng:-122.3040 },
+  { id:"more",   name:"More Hall / engineering",      lat:47.6536, lng:-122.3040 },
+  { id:"ave",    name:"The Ave at NE 45th",           lat:47.6613, lng:-122.3130 },
+  { id:"udist",  name:"U District light rail station",lat:47.6605, lng:-122.3137 },
+  { id:"stadium",name:"Husky Stadium / UW station",   lat:47.6497, lng:-122.3040 }
+];
+
+
+/* ---------- src/data/places.js ---------- */
+// Gazetteer for the free-text location field. No geocoding API — the deployed
+// page makes no outbound requests — so matching is local (src/lib/locate.js).
+// Owner: dataset + recommendation logic.
+//
+// Coords are building centres, ±150m ≈ ±2 min. Fine for "can I get there and
+// back", not for turn-by-turn.
+//
+// `aliases` = what people actually type: course codes (MGH, CSE2, HSB),
+// nicknames, common misspellings.
+
+const PLACES = [
+  // --- central campus ---
+  { name: "Red Square", lat: 47.6558, lng: -122.3089, aliases: ["red square", "central plaza", "the square"] },
+  { name: "Suzzallo Library", lat: 47.6557, lng: -122.3080, aliases: ["suzzallo", "suz", "suzallo", "suzzalo", "reading room"] },
+  { name: "Allen Library", lat: 47.6560, lng: -122.3073, aliases: ["allen library", "allen"] },
+  { name: "Odegaard Library", lat: 47.6566, lng: -122.3105, aliases: ["odegaard", "ode", "oug", "odegard", "ugl"] },
+  { name: "Kane Hall", lat: 47.6563, lng: -122.3095, aliases: ["kane", "kne"] },
+  { name: "Gerberding Hall", lat: 47.6553, lng: -122.3082, aliases: ["gerberding", "ger"] },
+  { name: "Mary Gates Hall", lat: 47.6552, lng: -122.3070, aliases: ["mary gates", "mgh"] },
+  { name: "Gowen Hall", lat: 47.6557, lng: -122.3068, aliases: ["gowen", "gwn"] },
+  { name: "Savery Hall", lat: 47.6566, lng: -122.3072, aliases: ["savery", "sav"] },
+  { name: "Smith Hall", lat: 47.6570, lng: -122.3076, aliases: ["smith", "smi"] },
+  { name: "Raitt Hall", lat: 47.6573, lng: -122.3078, aliases: ["raitt", "rai"] },
+  { name: "Miller Hall", lat: 47.6577, lng: -122.3072, aliases: ["miller", "mlr"] },
+  { name: "Thomson Hall", lat: 47.6564, lng: -122.3063, aliases: ["thomson", "thompson hall", "thO"] },
+  { name: "Communications Building", lat: 47.6566, lng: -122.3054, aliases: ["communications", "cmu", "comm"] },
+  { name: "Art Building", lat: 47.6576, lng: -122.3059, aliases: ["art building", "art", "ceramic"] },
+  { name: "Music Building", lat: 47.6583, lng: -122.3062, aliases: ["music building", "music", "mus"] },
+  { name: "Meany Hall", lat: 47.6559, lng: -122.3105, aliases: ["meany", "mny"] },
+  { name: "Parrington Hall", lat: 47.6577, lng: -122.3097, aliases: ["parrington", "par"] },
+  { name: "Denny Hall", lat: 47.6588, lng: -122.3081, aliases: ["denny", "dEN"] },
+  { name: "Lewis Hall", lat: 47.6585, lng: -122.3080, aliases: ["lewis hall"] },
+  { name: "Clark Hall", lat: 47.6583, lng: -122.3075, aliases: ["clark hall"] },
+  { name: "The Quad", lat: 47.6572, lng: -122.3070, aliases: ["the quad", "quad", "liberal arts quad", "cherry trees"] },
+  { name: "Padelford Hall", lat: 47.6572, lng: -122.3040, aliases: ["padelford", "pdl"] },
+  { name: "The HUB", lat: 47.6553, lng: -122.3050, aliases: ["hub", "husky union", "husky union building", "student union"] },
+
+  // --- science and engineering ---
+  { name: "Bagley Hall", lat: 47.6540, lng: -122.3086, aliases: ["bagley", "bag", "chemistry"] },
+  { name: "Johnson Hall", lat: 47.6540, lng: -122.3094, aliases: ["johnson", "jhn", "geology"] },
+  { name: "Guggenheim Hall", lat: 47.6541, lng: -122.3057, aliases: ["guggenheim", "gug", "aero"] },
+  { name: "Paul G. Allen Center", lat: 47.6531, lng: -122.3048, aliases: ["allen center", "cse", "cse1", "paul allen", "computer science"] },
+  { name: "Gates Center", lat: 47.6533, lng: -122.3055, aliases: ["gates center", "cse2", "bill gates hall"] },
+  { name: "Electrical Engineering", lat: 47.6536, lng: -122.3053, aliases: ["ece", "eeb", "electrical engineering"] },
+  { name: "Mechanical Engineering", lat: 47.6537, lng: -122.3062, aliases: ["meb", "mechanical engineering"] },
+  { name: "More Hall", lat: 47.6536, lng: -122.3040, aliases: ["more hall", "mor", "civil engineering"] },
+  { name: "Loew Hall", lat: 47.6541, lng: -122.3044, aliases: ["loew", "low hall"] },
+  { name: "Sieg Hall", lat: 47.6538, lng: -122.3058, aliases: ["sieg", "sig"] },
+  { name: "Benson Hall", lat: 47.6535, lng: -122.3050, aliases: ["benson", "bns"] },
+  { name: "Roberts Hall", lat: 47.6535, lng: -122.3065, aliases: ["roberts", "rob"] },
+  { name: "Mueller Hall", lat: 47.6538, lng: -122.3068, aliases: ["mueller", "mul"] },
+  { name: "Fluke Hall", lat: 47.6545, lng: -122.3030, aliases: ["fluke", "flk"] },
+  { name: "Physics/Astronomy Building", lat: 47.6600, lng: -122.3105, aliases: ["physics", "astronomy", "pab", "paa", "phys"] },
+  { name: "Kincaid Hall", lat: 47.6524, lng: -122.3097, aliases: ["kincaid", "kin", "biology"] },
+  { name: "Hitchcock Hall", lat: 47.6520, lng: -122.3105, aliases: ["hitchcock", "hck"] },
+  { name: "Life Sciences Building", lat: 47.6518, lng: -122.3095, aliases: ["life sciences", "lsb"] },
+  { name: "Winkenwerder Hall", lat: 47.6533, lng: -122.3072, aliases: ["winkenwerder", "wfs", "forestry"] },
+  { name: "Anderson Hall", lat: 47.6531, lng: -122.3078, aliases: ["anderson hall", "and"] },
+  { name: "Bloedel Hall", lat: 47.6529, lng: -122.3073, aliases: ["bloedel", "bld"] },
+
+  // --- south campus and health sciences ---
+  { name: "Health Sciences Building", lat: 47.6510, lng: -122.3085, aliases: ["health sciences", "hsb", "magnuson", "t wing", "hsc"] },
+  { name: "UW Medical Center", lat: 47.6505, lng: -122.3075, aliases: ["uw medical", "uwmc", "the hospital", "medical center"] },
+  { name: "South Campus Center", lat: 47.6503, lng: -122.3095, aliases: ["south campus center", "scc"] },
+  { name: "Ocean Sciences Building", lat: 47.6525, lng: -122.3120, aliases: ["ocean sciences", "osb", "oceanography"] },
+  { name: "Marine Sciences Building", lat: 47.6525, lng: -122.3128, aliases: ["marine sciences", "msb"] },
+  { name: "Fishery Sciences Building", lat: 47.6522, lng: -122.3155, aliases: ["fishery sciences", "fsh", "fisheries"] },
+  { name: "Husky Stadium", lat: 47.6500, lng: -122.3015, aliases: ["husky stadium", "the stadium", "football stadium"] },
+  { name: "UW Light Rail Station", lat: 47.6497, lng: -122.3040, aliases: ["uw station", "husky stadium station", "the link", "light rail"] },
+  { name: "Hec Edmundson Pavilion", lat: 47.6530, lng: -122.3010, aliases: ["hec ed", "pavilion", "alaska airlines arena"] },
+  { name: "IMA", lat: 47.6534, lng: -122.3008, aliases: ["ima", "intramural", "the gym", "rec center"] },
+
+  // --- west campus ---
+  { name: "Gould Hall", lat: 47.6553, lng: -122.3132, aliases: ["gould", "gld", "architecture"] },
+  { name: "Architecture Hall", lat: 47.6546, lng: -122.3120, aliases: ["architecture hall", "arc"] },
+  { name: "Hutchinson Hall", lat: 47.6552, lng: -122.3125, aliases: ["hutchinson", "htc", "drama"] },
+  { name: "Schmitz Hall", lat: 47.6561, lng: -122.3138, aliases: ["schmitz", "smz", "registrar", "financial aid"] },
+  { name: "Condon Hall", lat: 47.6563, lng: -122.3160, aliases: ["condon", "cdh"] },
+  { name: "Campus Parkway", lat: 47.6566, lng: -122.3155, aliases: ["campus parkway", "campus pkwy", "the bus stop"] },
+  { name: "Alder Hall", lat: 47.6549, lng: -122.3160, aliases: ["alder", "alder hall"] },
+  { name: "Elm Hall", lat: 47.6546, lng: -122.3163, aliases: ["elm", "elm hall"] },
+  { name: "Lander Hall", lat: 47.6553, lng: -122.3168, aliases: ["lander"] },
+  { name: "Maple Hall", lat: 47.6539, lng: -122.3165, aliases: ["maple", "maple hall"] },
+  { name: "Poplar Hall", lat: 47.6539, lng: -122.3157, aliases: ["poplar"] },
+  { name: "Terry Hall", lat: 47.6556, lng: -122.3145, aliases: ["terry", "terry hall"] },
+  { name: "Mercer Court", lat: 47.6537, lng: -122.3176, aliases: ["mercer court", "mercer"] },
+  { name: "Cedar Apartments", lat: 47.6558, lng: -122.3175, aliases: ["cedar apartments", "cedar"] },
+  { name: "Stevens Court", lat: 47.6550, lng: -122.3180, aliases: ["stevens court"] },
+
+  // --- north campus ---
+  { name: "McMahon Hall", lat: 47.6603, lng: -122.3040, aliases: ["mcmahon", "mac mahon"] },
+  { name: "Haggett Hall", lat: 47.6606, lng: -122.3050, aliases: ["haggett"] },
+  { name: "Oak Hall", lat: 47.6603, lng: -122.3055, aliases: ["oak hall"] },
+  { name: "Hansee Hall", lat: 47.6603, lng: -122.3085, aliases: ["hansee"] },
+  { name: "Burke Museum", lat: 47.6605, lng: -122.3117, aliases: ["burke", "burke museum", "natural history"] },
+  { name: "Henry Art Gallery", lat: 47.6573, lng: -122.3115, aliases: ["henry", "henry art", "the henry"] },
+  { name: "Greek Row", lat: 47.6600, lng: -122.3060, aliases: ["greek row", "frat row", "17th ave"] },
+  { name: "Foster School of Business", lat: 47.6593, lng: -122.3070, aliases: ["foster", "paccar", "paccar hall", "dempsey", "business school"] },
+
+  // --- off campus ---
+  { name: "The Ave at NE 45th", lat: 47.6613, lng: -122.3130, aliases: ["the ave", "ave", "university way", "45th"] },
+  { name: "The Ave at NE 42nd", lat: 47.6578, lng: -122.3130, aliases: ["42nd", "lower ave", "ave and 42nd"] },
+  { name: "U District Light Rail Station", lat: 47.6605, lng: -122.3137, aliases: ["u district station", "brooklyn station", "udistrict station"] },
+  { name: "University Village", lat: 47.6626, lng: -122.2996, aliases: ["u village", "university village", "uvillage", "the village"] },
+  { name: "Roosevelt Station", lat: 47.6762, lng: -122.3175, aliases: ["roosevelt station", "roosevelt"] },
+  { name: "Ravenna", lat: 47.6700, lng: -122.3050, aliases: ["ravenna", "ravenna park"] },
+  { name: "Wallingford", lat: 47.6613, lng: -122.3340, aliases: ["wallingford", "n 45th"] },
+  { name: "Montlake", lat: 47.6440, lng: -122.3045, aliases: ["montlake", "montlake bridge"] },
+  { name: "Portage Bay", lat: 47.6522, lng: -122.3160, aliases: ["portage bay", "boat street", "boat st"] },
+];
+
+// alias -> index, built once.
+const ALIAS_INDEX = (() => {
+  const map = new Map();
+  PLACES.forEach((p, i) => {
+    map.set(p.name.toLowerCase(), i);
+    for (const a of p.aliases) map.set(a.toLowerCase(), i);
+  });
+  return map;
+})();
+
+
+/* ---------- src/data/venues.js ---------- */
+// GENERATED by scripts/enrich.js — run `npm run enrich`, don't hand-edit.
+// Real hours/coords from Google Places. Missing entries fall back to the
+// category profiles in src/lib/hours.js.
+//
+//   questId: { placeId, name, lat, lng, hours, fetchedAt }
+//   hours: { weekday: [[openMin, closeMin], ...] }, 0 = Sunday.
+//          [] = shut that day, "always" = never shuts, absent = unknown.
+
+const VENUES = {};
+
+const ENRICHED_AT = null;   // null until someone runs enrich
+
+
+/* ---------- src/data/calibration.js ---------- */
+// GENERATED by scripts/calibrate.js. Committed default is our day-one guess.
+// Model: straight-line metres * factor / speed. The factor absorbs street
+// grids, hills, and not being able to walk through Suzzallo.
+
+const CALIBRATION = {
+  factor: 1.32,
+  speedMetresPerMinute: 78,
+  source: "assumed",     // "google-routes" once calibrate has run
+  fittedAt: null,
+  samples: 0,
+  medianErrorMinutes: null,
+};
+
+
+/* ---------- src/data/quests.js ---------- */
+// The curated dataset, checked by hand.
+// Owner: dataset + recommendation logic.
+//
+// The UI depends on this shape — see CONTRACT in README before changing it.
+//   id       stable slug, used by the "seen already" exclusion list
+//   mood     one of productive | social | quiet | food | outdoors
+//   tags     secondary moods, scored lower than a primary match
+//   act      [shortest sensible visit, longest enjoyable visit] in minutes
+//   cost     [low, high] in dollars for one person
+//   indoor   true if the rain filter should keep it
+//   openness hours profile: outdoor | campus | library | cafe | restaurant |
+//            shop | museum | gym | evening | boathouse (see src/lib/hours.js)
+//   hours    per-venue override, { open, close, note } in minutes from midnight
+//   via      optional transit leg: { hub, ride, egress, mode }
+//   delight  0-10, how good a story it makes. Tiebreak only.
+
+/* Transit hubs used by the far-flung quests. */
+const HUB_UDIST   = { lat:47.6605, lng:-122.3137 };  // Link, U District
+const HUB_CAMPUSP = { lat:47.6566, lng:-122.3155 };  // Campus Pkwy bus bays
+const HUB_45TH    = { lat:47.6612, lng:-122.3134 };  // the 44 on NE 45th
+
+/* Each quest: mood is the primary vibe, tags are the secondary ones.
+   act = [shortest sensible visit, longest enjoyable visit] in minutes.
+   cost = [low, high] in dollars for one person.
+   delight = how much of a story it makes (0-10). */
+const QUESTS = [
+/* ---- on campus, free, strange ---- */
+{id:"suzzallo", name:"Read one chapter in the Suzzallo Reading Room", area:"Central campus",
+ addr:"Suzzallo Library, University of Washington, Seattle WA",
+ mood:"quiet", tags:["productive"], lat:47.6557, lng:-122.3080, indoor:true, openness:"library",
+ cost:[0,0], act:[15,50], delight:9,
+ blurb:"Sixty-five foot vaulted ceilings, stained glass, absolute silence. Bring anything to read and sit at one of the long oak tables like you're in a film about studying.",
+ tip:"Sit on the north side in the afternoon — the window light is the whole point."},
+
+{id:"sylvan", name:"Find the four columns in Sylvan Grove", area:"West campus edge",
+ addr:"Sylvan Grove Theater, University of Washington, Seattle WA",
+ mood:"quiet", tags:["outdoors"], lat:47.6542, lng:-122.3117, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[10,25], delight:8,
+ blurb:"Four white columns from the University's original 1861 downtown building, hauled here and stood in a hidden grove of firs. Most students graduate without ever finding it.",
+ tip:"They're named Loyalty, Industry, Faith and Efficiency. Yes, really."},
+
+{id:"herb", name:"Walk the Medicinal Herb Garden", area:"Central campus",
+ addr:"UW Medicinal Herb Garden, Seattle WA",
+ mood:"outdoors", tags:["quiet"], lat:47.6531, lng:-122.3036, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[15,35], delight:7,
+ blurb:"A working teaching garden from 1911, still growing things that are technically drugs. Read the little metal labels and feel briefly like a botanist.",
+ tip:"Look for the two stone monkeys guarding the east entrance."},
+
+{id:"drumheller", name:"Sit at Drumheller Fountain and check if the mountain is out", area:"Central campus",
+ addr:"Drumheller Fountain, University of Washington, Seattle WA",
+ mood:"outdoors", tags:["quiet","social"], lat:47.6531, lng:-122.3060, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[10,25], delight:6,
+ blurb:"Rainier Vista points straight at the mountain on purpose. On a clear day it's the best free view on campus; on a grey day it's still a fountain you can sit by.",
+ tip:"Stand at the north rim and line the fountain up with the Vista before you look up."},
+
+{id:"henry", name:"See one room at the Henry Art Gallery", area:"North campus",
+ addr:"Henry Art Gallery, 15th Ave NE & NE 41st St, Seattle WA",
+ mood:"quiet", tags:["productive"], lat:47.6573, lng:-122.3115, indoor:true, openness:"museum",
+ cost:[0,0], act:[22,70], delight:8,
+ blurb:"Contemporary art, usually unsettling, usually excellent. Free with your Husky Card. Don't try to see all of it — pick one gallery and actually look.",
+ tip:"The James Turrell Skyspace outside is free and open even when the galleries aren't."},
+
+{id:"burke", name:"Go stare at the Burke Museum's fossils", area:"North campus",
+ addr:"Burke Museum, 4300 15th Ave NE, Seattle WA",
+ mood:"quiet", tags:["productive","social"], lat:47.6605, lng:-122.3117, indoor:true, openness:"museum",
+ cost:[0,0], act:[35,95], delight:8,
+ blurb:"Natural history and Northwest Native art, with glass-walled labs where you can watch people actually working on the collections.",
+ tip:"Free with your Husky Card. The T. rex skull is real, and it's called Tufts-Love."},
+
+{id:"grieg", name:"Have a quiet ten minutes in Grieg Garden", area:"Central campus",
+ addr:"Grieg Garden, University of Washington, Seattle WA",
+ mood:"quiet", tags:["outdoors"], lat:47.6558, lng:-122.3095, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[10,18], delight:6,
+ blurb:"A sunken garden with a bust of a Norwegian composer in it, thirty seconds off Red Square and somehow always empty.",
+ tip:"Best bench is the one facing away from the path."},
+
+{id:"observatory", name:"Look through the Jacobsen Observatory telescope", area:"North campus",
+ addr:"Theodor Jacobsen Observatory, University of Washington, Seattle WA",
+ mood:"quiet", tags:["social","outdoors"], lat:47.6604, lng:-122.3093, indoor:true, openness:"evening",
+ cost:[0,0], act:[30,50], delight:9,
+ blurb:"An 1895 sandstone observatory with a brass refracting telescope, opened to the public on clear evenings by volunteer astronomers. Free.",
+ tip:"Evenings only and weather-dependent — check the schedule before you walk over."},
+
+{id:"hubgames", name:"Bowl two frames in the HUB basement", area:"Central campus",
+ addr:"Husky Union Building, 4001 E Stevens Way NE, Seattle WA",
+ mood:"social", tags:["productive"], lat:47.6553, lng:-122.3050, indoor:true, openness:"campus",
+ cost:[4,12], act:[30,60], delight:7,
+ blurb:"There are bowling lanes and pool tables under the HUB. Student rates. Almost nobody uses them at 2pm on a Tuesday.",
+ tip:"Cheaper per game if you're not alone — text someone from your lecture."},
+
+{id:"odegaard", name:"Claim a window seat on Odegaard's top floor", area:"Central campus",
+ addr:"Odegaard Undergraduate Library, Seattle WA",
+ mood:"productive", tags:["quiet"], lat:47.6566, lng:-122.3105, indoor:true, openness:"library",
+ cost:[0,0], act:[22,110], delight:4,
+ blurb:"Not romantic, but it's the highest-density-of-focus room within a two-minute walk of Red Square. Third floor, west windows, phone in your bag.",
+ tip:"If it's full, the Allen Library reading rooms next door almost never are."},
+
+{id:"blindshelf", name:"Pick a random shelf in Allen Library and read the first page", area:"Central campus",
+ addr:"Allen Library, University of Washington, Seattle WA",
+ mood:"quiet", tags:["productive"], lat:47.6560, lng:-122.3073, indoor:true, openness:"library",
+ cost:[0,0], act:[14,40], delight:8,
+ blurb:"Go into the stacks, pick a floor you've never been to, close your eyes, pull a book, read page one. You are allowed to hate it and put it back.",
+ tip:"Floors 3 and 4 of Allen South are where the genuinely strange things live."},
+
+{id:"fill", name:"Bird-watch the Union Bay Natural Area", area:"East of campus",
+ addr:"Union Bay Natural Area, 3501 NE 41st St, Seattle WA",
+ mood:"outdoors", tags:["quiet"], lat:47.6575, lng:-122.2900, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[35,80], delight:8,
+ blurb:"Locals call it the Montlake Fill. It's a capped landfill turned wetland and it's one of the best birding spots in the city, with the lake on three sides.",
+ tip:"Wear shoes you don't mind ruining. It is a swamp with ambitions."},
+
+{id:"canoe", name:"Rent a canoe at the Waterfront Activities Center", area:"South campus",
+ addr:"UW Waterfront Activities Center, 3710 Montlake Blvd NE, Seattle WA",
+ mood:"outdoors", tags:["social"], lat:47.6492, lng:-122.2978, indoor:false, openness:"boathouse",
+ cost:[14,22], act:[60,110], delight:10,
+ blurb:"Cheap hourly canoe rental behind Husky Stadium, and you paddle straight into the Arboretum lily pads. The single best thing on this list.",
+ tip:"Seasonal and daylight-only — bring your Husky Card for the student rate."},
+
+{id:"burkegilman", name:"Walk the Burke-Gilman out to Sakuma Viewpoint and back", area:"South campus",
+ addr:"Burke-Gilman Trail, University of Washington, Seattle WA",
+ mood:"outdoors", tags:["quiet"], lat:47.6512, lng:-122.3047, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[25,60], delight:5,
+ blurb:"Flat, paved, water on one side. Go out until it stops being interesting, then turn around. Watch for cyclists who will not slow down for you.",
+ tip:"Sakuma Viewpoint looks over Portage Bay and is a good place to take a phone call."},
+
+{id:"obelisk", name:"Work out what the Broken Obelisk in Red Square is for", area:"Central campus",
+ addr:"Broken Obelisk, Red Square, University of Washington, Seattle WA",
+ mood:"quiet", tags:["outdoors","productive"], lat:47.6559, lng:-122.3093, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[10,16], delight:6,
+ blurb:"A five-storey rust-coloured Barnett Newman sculpture balanced point-to-point that you have walked past two hundred times without reading the plaque.",
+ tip:"Then go stand on the grate between the two brick pyramids and look straight up."},
+
+{id:"farm", name:"Visit the UW Farm at Mercer Court", area:"West campus",
+ addr:"UW Farm, Mercer Court, Seattle WA",
+ mood:"outdoors", tags:["quiet","productive"], lat:47.6538, lng:-122.3175, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[20,45], delight:7,
+ blurb:"A real student-run farm in the middle of the dorms, growing food for campus dining. Rows of chard where you'd expect a parking lot.",
+ tip:"They run drop-in work parties most weeks if you want dirt under your fingernails."},
+
+{id:"ima", name:"Drop in at the IMA for one honest hour", area:"South campus",
+ addr:"Intramural Activities Building, 3501 NE Belvoir Pl, Seattle WA",
+ mood:"social", tags:["productive","outdoors"], lat:47.6534, lng:-122.3008, indoor:true, openness:"gym",
+ cost:[0,0], act:[35,110], delight:5,
+ blurb:"Already paid for in your fees. Courts, climbing wall, pool, treadmills with a view of the lake. The hardest part is the walk over, and you're already doing that.",
+ tip:"Bring your Husky Card or you're not getting through the turnstile."},
+
+{id:"kane", name:"Sit in on a lecture you're not taking", area:"Central campus",
+ addr:"Kane Hall, University of Washington, Seattle WA",
+ mood:"productive", tags:["social","quiet"], lat:47.6563, lng:-122.3095, indoor:true, openness:"campus",
+ cost:[0,0], act:[15,45], delight:9,
+ blurb:"Walk into one of Kane's big lecture halls, sit at the back, and learn twenty minutes of something you will never be examined on.",
+ tip:"Large halls only, arrive with the crowd, don't take the seat someone needs. Oceanography and astronomy lectures are the reliably good ones."},
+
+{id:"denny", name:"Walk through Denny Hall, the oldest building on campus", area:"North campus",
+ addr:"Denny Hall, University of Washington, Seattle WA",
+ mood:"quiet", tags:["productive","outdoors"], lat:47.6588, lng:-122.3081, indoor:true, openness:"campus",
+ cost:[0,0], act:[10,25], delight:7,
+ blurb:"Built in 1895, when the whole university was this one building and a field. Renovated, still creaky, with a bell tower and stairs worn into curves.",
+ tip:"Go up to the top floor. The corridor windows look out over the north campus trees."},
+
+{id:"gould", name:"Stand in the Gould Hall atrium and look up", area:"West campus",
+ addr:"Gould Hall, 3950 University Way NE, Seattle WA",
+ mood:"quiet", tags:["productive"], lat:47.6553, lng:-122.3132, indoor:true, openness:"campus",
+ cost:[0,0], act:[10,25], delight:7,
+ blurb:"The architecture building is a concrete cathedral of open studio balconies stacked around a courtyard. Models, drawings, and students who have clearly not slept.",
+ tip:"The pinned-up studio work on the upper levels is free and better than most galleries."},
+
+{id:"hublounge", name:"Take the HUB lounge with your phone in your bag", area:"Central campus",
+ addr:"Husky Union Building, 4001 E Stevens Way NE, Seattle WA",
+ mood:"social", tags:["quiet"], lat:47.6553, lng:-122.3050, indoor:true, openness:"campus",
+ cost:[0,0], act:[15,40], delight:5,
+ blurb:"Big armchairs, tall windows, a fireplace, and the entire university walking past you. Free, dry, and two minutes from almost everywhere.",
+ tip:"The upstairs lounges are much quieter than the ground floor food court."},
+
+{id:"hsl", name:"Take a table in the Health Sciences Library", area:"South campus",
+ addr:"Health Sciences Library, 1959 NE Pacific St, Seattle WA",
+ mood:"productive", tags:["quiet"], lat:47.6509, lng:-122.3082, indoor:true, openness:"library",
+ cost:[0,0], act:[15,100], delight:5,
+ blurb:"Open to every UW student, not just the medics, and almost nobody outside the health schools knows that. Deep silence and a shortage of people fighting you for a seat.",
+ tip:"South campus's best-kept quiet room, and it's three minutes from the hospital cafés."},
+
+{id:"uwstation", name:"Look at the glass wall inside UW light rail station", area:"Husky Stadium",
+ addr:"University of Washington Station, 3720 Montlake Blvd NE, Seattle WA",
+ mood:"quiet", tags:["productive","social"], lat:47.6497, lng:-122.3040, indoor:true, openness:"shop", hours:{ open:5*60, close:24*60, note:"train hours" },
+ cost:[0,0], act:[10,22], delight:8,
+ blurb:"The station is a 100-foot concrete box with a wall of coloured glass panels running its full depth, lit so it changes as you ride the escalator down. Free, dry, and almost nobody stops to look.",
+ tip:"Ride the escalator down slowly and look left. You don't have to tap in to see it."},
+
+{id:"writingcenter", name:"Take something you're stuck on to the Odegaard Writing Center", area:"Central campus",
+ addr:"Odegaard Writing and Research Center, Odegaard Library, Seattle WA",
+ mood:"productive", tags:["quiet"], lat:47.6566, lng:-122.3103, indoor:true, openness:"campus",
+ cost:[0,0], act:[30,60], delight:6,
+ blurb:"Free one-on-one help with any writing at any stage, including the stage where it's three bullet points and a bad feeling. You've already paid for this.",
+ tip:"Drop-ins exist but appointments go fast — book on the way over."},
+
+{id:"studyroom", name:"Book a group study room and use it entirely alone", area:"Central campus",
+ addr:"Suzzallo Library, University of Washington, Seattle WA",
+ mood:"productive", tags:["quiet"], lat:47.6557, lng:-122.3078, indoor:true, openness:"campus",
+ cost:[0,0], act:[25,110], delight:7,
+ blurb:"Whiteboard, door that closes, a screen you can plug into, no one watching your screen. Reserve it for one person and stand at the whiteboard like a lunatic.",
+ tip:"Book it from your phone while you walk. Same-day slots open up constantly."},
+
+{id:"avewalk", name:"Walk the Ave end to end, 42nd to 50th", area:"The Ave",
+ addr:"University Way NE, Seattle WA",
+ mood:"outdoors", tags:["social"], lat:47.6595, lng:-122.3130, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[15,30], delight:6,
+ blurb:"Eight blocks of bubble tea, barbers, board game shops and at least one thing that has changed hands since you last looked up. Walk it without going into anything.",
+ tip:"The cross streets are where the odd shops hide. Look down 42nd and 45th as you pass."},
+
+{id:"dennyfield", name:"Lie down on Denny Field", area:"North campus",
+ addr:"Denny Field, University of Washington, Seattle WA",
+ mood:"outdoors", tags:["social","quiet"], lat:47.6597, lng:-122.3060, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[10,30], delight:5,
+ blurb:"The open field on north campus where the stadium used to be, ringed by trees. Intramural games in the evening, completely empty in the middle of a weekday.",
+ tip:"The north edge gets the last sun of the day. Useful in February."},
+
+/* ---- food and coffee ---- */
+{id:"allegro", name:"Find Cafe Allegro down the alley", area:"The Ave",
+ addr:"Cafe Allegro, 4214 University Way NE, Seattle WA",
+ mood:"food", tags:["quiet","productive"], lat:47.6577, lng:-122.3126, indoor:true, openness:"cafe",
+ cost:[4,9], act:[25,55], delight:9,
+ blurb:"Seattle's oldest espresso bar, hidden in an alley behind a newsstand since 1975. Dark wood, no music, people writing dissertations.",
+ tip:"The entrance is genuinely an unmarked alley door off NE 42nd. That's not a mistake."},
+
+{id:"bulldog", name:"Read a magazine you'd never buy at Bulldog News", area:"The Ave",
+ addr:"Bulldog News, 4208 University Way NE, Seattle WA",
+ mood:"food", tags:["quiet"], lat:47.6578, lng:-122.3130, indoor:true, openness:"cafe",
+ cost:[3,12], act:[20,45], delight:7,
+ blurb:"A wall of international magazines and an espresso counter. Buy a coffee, take something about Japanese architecture or Norwegian fishing to a stool.",
+ tip:"They'll let you browse for a long time if you've bought a drink. Buy the drink."},
+
+{id:"thanbros", name:"Get pho and a free cream puff at Than Brothers", area:"The Ave",
+ addr:"Than Brothers Pho, 4207 University Way NE, Seattle WA",
+ mood:"food", tags:[], lat:47.6578, lng:-122.3128, indoor:true, openness:"restaurant",
+ cost:[11,17], act:[30,45], delight:8,
+ blurb:"Every bowl of pho comes with a complimentary cream puff, which arrives first and makes no sense and is correct.",
+ tip:"Small is enormous. Order the small."},
+
+{id:"thaitom", name:"Sit at the counter at Thai Tom and watch the wok", area:"The Ave",
+ addr:"Thai Tom, 4543 University Way NE, Seattle WA",
+ mood:"food", tags:["social"], lat:47.6614, lng:-122.3130, indoor:true, openness:"restaurant",
+ cost:[12,18], act:[30,55], delight:8,
+ blurb:"Tiny, loud, one cook, flames a foot high, a line out the door at peak. The counter seats are the show.",
+ tip:"Go at an odd hour or you'll spend your whole gap in the queue. Heat levels are not a bluff."},
+
+{id:"udon", name:"Build your own bowl at U:Don", area:"The Ave",
+ addr:"U:Don Fresh Japanese Noodle Station, 4515 University Way NE, Seattle WA",
+ mood:"food", tags:[], lat:47.6610, lng:-122.3131, indoor:true, openness:"restaurant",
+ cost:[10,16], act:[25,40], delight:7,
+ blurb:"Noodles cut in front of you, then you walk down a line adding tempura like it's a cafeteria designed by someone who loves you.",
+ tip:"Fastest sit-down meal on the Ave when you're on a 45-minute clock."},
+
+{id:"aladdin", name:"Get a gyro from Aladdin and eat it walking", area:"The Ave",
+ addr:"Aladdin Gyro-cery, 4139 University Way NE, Seattle WA",
+ mood:"food", tags:["outdoors"], lat:47.6572, lng:-122.3128, indoor:true, openness:"restaurant",
+ cost:[9,14], act:[20,35], delight:7,
+ blurb:"Enormous, cheap, wrapped in foil, engineered for exactly this situation. Eat it on the walk back and you've spent nothing but calories.",
+ tip:"Ask for extra sauce; it comes in a cup and changes everything."},
+
+{id:"solstice", name:"Set up at Cafe Solstice for a real work block", area:"The Ave",
+ addr:"Cafe Solstice, 4116 University Way NE, Seattle WA",
+ mood:"productive", tags:["food","quiet"], lat:47.6568, lng:-122.3132, indoor:true, openness:"cafe",
+ cost:[4,10], act:[45,110], delight:6,
+ blurb:"Big room, big tables, everyone silently working. The default U District study café for a reason.",
+ tip:"Outlets cluster along the walls. Arrive before 3pm if you want one."},
+
+{id:"suzzespresso", name:"Take an espresso up to the Suzzallo mezzanine", area:"Central campus",
+ addr:"Suzzallo Library, University of Washington, Seattle WA",
+ mood:"food", tags:["productive","quiet"], lat:47.6556, lng:-122.3083, indoor:true, openness:"cafe",
+ cost:[3,7], act:[20,45], delight:6,
+ blurb:"There's an espresso counter on Suzzallo's ground floor. Ninety seconds from Red Square, and you get the cathedral upstairs as a reading room.",
+ tip:"Drinks aren't allowed in the Reading Room itself — finish it on the mezzanine."},
+
+{id:"portagebay", name:"Eat a proper breakfast at Portage Bay Cafe", area:"Roosevelt",
+ addr:"Portage Bay Cafe, 4130 Roosevelt Way NE, Seattle WA",
+ mood:"food", tags:["social"], lat:47.6572, lng:-122.3175, indoor:true, openness:"shop", hours:{ open:8*60, close:15*60, note:"breakfast and lunch only" },
+ cost:[18,30], act:[45,80], delight:8,
+ blurb:"The famous toppings bar: your pancakes come plain and you go load them with berries and cream yourself. Expensive, enormous, worth it once a quarter.",
+ tip:"Weekend waits are brutal. A weekday gap is the correct time to do this."},
+
+{id:"aguaverde", name:"Eat tacos over the water at Agua Verde", area:"Portage Bay",
+ addr:"Agua Verde Cafe, 1303 NE Boat St, Seattle WA",
+ mood:"food", tags:["outdoors","social"], lat:47.6522, lng:-122.3160, indoor:true, openness:"restaurant",
+ cost:[14,24], act:[40,75], delight:9,
+ blurb:"Mexican food on a deck over Portage Bay with kayaks below you. The most vacation you can feel while still technically being on campus.",
+ tip:"Sit outside even when it's grey. That's the entire point of the place."},
+
+{id:"mollymoon", name:"Get a scoop at Molly Moon's in U Village", area:"U Village",
+ addr:"Molly Moon's Homemade Ice Cream, U Village, Seattle WA",
+ mood:"food", tags:["social"], lat:47.6626, lng:-122.2996, indoor:true, openness:"shop", hours:{ open:12*60, close:22*60, note:"open late" },
+ cost:[6,11], act:[25,50], delight:7,
+ blurb:"Salted caramel, honey lavender, and a line of people who all made the same decision you did. U Village is an odd, tidy little world worth twenty minutes.",
+ tip:"They'll give you a taste spoon of anything. Use that power responsibly."},
+
+{id:"dicks", name:"Walk to Dick's in Wallingford for a Deluxe", area:"Wallingford",
+ addr:"Dick's Drive-In, 111 NE 45th St, Seattle WA",
+ mood:"food", tags:["social","outdoors"], lat:47.6612, lng:-122.3260, indoor:false, openness:"shop", hours:{ open:10*60+30, close:24*60, note:"open very late" },
+ cost:[6,13], act:[25,45], delight:8,
+ via:{hub:HUB_45TH, ride:7, egress:2, mode:"the 44 bus"},
+ blurb:"A Seattle institution since 1954 with no indoor seating, no wifi and a menu of six things. You eat standing at a counter outside in the rain like a local.",
+ tip:"Cash-friendly, fast, and the fries are hand-cut. Deluxe, fries, shake — don't overthink it."},
+
+/* ---- shops, books, weird retail ---- */
+{id:"magus", name:"Get lost in Magus Books", area:"The Ave",
+ addr:"Magus Books, 1408 NE 42nd St, Seattle WA",
+ mood:"quiet", tags:["productive"], lat:47.6579, lng:-122.3129, indoor:true, openness:"shop",
+ cost:[0,18], act:[25,50], delight:9,
+ blurb:"A proper cramped used bookshop half a block off the Ave, floor to ceiling, slightly dusty, run by people who know where everything is.",
+ tip:"Cheap paperback philosophy and sci-fi are the strengths. Bring a little cash."},
+
+{id:"scarecrow", name:"Browse the impossible shelves at Scarecrow Video", area:"Roosevelt",
+ addr:"Scarecrow Video, 5030 Roosevelt Way NE, Seattle WA",
+ mood:"quiet", tags:["social","productive"], lat:47.6661, lng:-122.3175, indoor:true, openness:"shop", hours:{ open:11*60, close:22*60, note:"open late" },
+ cost:[0,6], act:[30,65], delight:10,
+ blurb:"A nonprofit archive of roughly 145,000 films, including thousands that exist nowhere else and stream nowhere at all. Browsing is free and faintly overwhelming.",
+ tip:"Ask a staff member for a recommendation by mood. It's what they're there for."},
+
+{id:"gargoyles", name:"Visit Gargoyles Statuary", area:"The Ave",
+ addr:"Gargoyles Statuary, 4550 University Way NE, Seattle WA",
+ mood:"quiet", tags:["social"], lat:47.6615, lng:-122.3134, indoor:true, openness:"shop",
+ cost:[0,20], act:[15,35], delight:9,
+ blurb:"A shop on the Ave selling gothic statuary, gargoyles and general cathedral wreckage. Free to wander, extremely free to buy nothing.",
+ tip:"Check the hours before you walk up — it keeps its own schedule."},
+
+{id:"buffalo", name:"Try on one ridiculous thing at Buffalo Exchange", area:"The Ave",
+ addr:"Buffalo Exchange, 4530 University Way NE, Seattle WA",
+ mood:"social", tags:["quiet"], lat:47.6613, lng:-122.3133, indoor:true, openness:"shop",
+ cost:[0,28], act:[25,50], delight:6,
+ blurb:"Secondhand, well-sorted, heavy on things other students got bored of. The rule for this quest is you must try on one item you would never buy.",
+ tip:"They buy clothes too — bring a bag next time and fund the next quest."},
+
+{id:"mcphee", name:"Go to Archie McPhee and buy something stupid", area:"Wallingford",
+ addr:"Archie McPhee, 1300 N 45th St, Seattle WA",
+ mood:"social", tags:["quiet"], lat:47.6613, lng:-122.3382, indoor:true, openness:"shop",
+ cost:[0,15], act:[30,55], delight:10,
+ via:{hub:HUB_45TH, ride:11, egress:2, mode:"the 44 bus"},
+ blurb:"A novelty shop of genuine international renown: rubber chickens, horse-head masks, tinned unicorn meat. There is a bacon-flavoured section.",
+ tip:"There's a free rubber chicken museum in the back. This sentence is not a joke."},
+
+{id:"halfprice", name:"Dig through Half Price Books on Roosevelt", area:"Roosevelt",
+ addr:"Half Price Books, 4709 Roosevelt Way NE, Seattle WA",
+ mood:"quiet", tags:["productive"], lat:47.6633, lng:-122.3173, indoor:true, openness:"shop",
+ cost:[0,16], act:[30,55], delight:6,
+ blurb:"Big, bright, well-organised, and the clearance section is where textbooks go to become three dollars.",
+ tip:"Check the clearance shelves first — they're by the back wall and they turn over fast."},
+
+{id:"ubookstore", name:"Go to the top floor of the University Book Store", area:"The Ave",
+ addr:"University Book Store, 4326 University Way NE, Seattle WA",
+ mood:"quiet", tags:["productive"], lat:47.6592, lng:-122.3131, indoor:true, openness:"shop",
+ cost:[0,20], act:[20,45], delight:5,
+ blurb:"Everyone goes for course texts and leaves. Upstairs there's a general bookshop, a pen counter, and a window seat nobody uses.",
+ tip:"Staff picks shelves here are unusually good and unusually ignored."},
+
+{id:"elliottbay", name:"Take the Link to Elliott Bay Book Company", area:"Capitol Hill",
+ addr:"Elliott Bay Book Company, 1521 10th Ave, Seattle WA",
+ mood:"quiet", tags:["productive"], lat:47.6142, lng:-122.3200, indoor:true, openness:"shop", hours:{ open:10*60, close:22*60, note:"open late" },
+ cost:[0,25], act:[40,70], delight:9,
+ via:{hub:HUB_UDIST, ride:8, egress:5, mode:"the Link"},
+ blurb:"Cedar shelves, a skylit main room and handwritten staff notes on half the books. Six minutes of light rail and you're in a different neighbourhood entirely.",
+ tip:"Their fiction staff notes are worth reading even if you buy nothing."},
+
+/* ---- out in the city ---- */
+{id:"ravenna", name:"Walk the ravine in Ravenna Park", area:"Ravenna",
+ addr:"Ravenna Park, 5520 Ravenna Ave NE, Seattle WA",
+ mood:"outdoors", tags:["quiet"], lat:47.6717, lng:-122.3030, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[35,65], delight:9,
+ blurb:"A deep wooded gorge with a creek at the bottom, twenty minutes from Red Square. Descend the trail and the city noise just stops.",
+ tip:"Enter at Cowen Park and walk east down the ravine — the descent is gentler that way."},
+
+{id:"cowen", name:"Take a lap of Cowen Park", area:"Ravenna",
+ addr:"Cowen Park, 5849 15th Ave NE, Seattle WA",
+ mood:"outdoors", tags:["quiet"], lat:47.6684, lng:-122.3103, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[20,35], delight:5,
+ blurb:"The small, friendly end of the Ravenna ravine. Big trees, a bridge, dogs. Enough nature to reset a bad seminar.",
+ tip:"If you've got more time, keep walking east and it becomes Ravenna Park."},
+
+{id:"gasworks", name:"Climb the sundial hill at Gas Works Park", area:"Wallingford",
+ addr:"Gas Works Park, 2101 N Northlake Way, Seattle WA",
+ mood:"outdoors", tags:["social","quiet"], lat:47.6456, lng:-122.3344, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[40,75], delight:9,
+ via:{hub:HUB_CAMPUSP, ride:14, egress:6, mode:"a bus down Stone Way"},
+ blurb:"Rusting 1906 gasification towers left standing in a park, with the whole downtown skyline across the water from the top of the hill.",
+ tip:"The sundial at the summit uses your own shadow to tell the time. Stand on today's date."},
+
+{id:"troll", name:"Shake hands with the Fremont Troll", area:"Fremont",
+ addr:"Fremont Troll, N 36th St, Seattle WA",
+ mood:"outdoors", tags:["social"], lat:47.6510, lng:-122.3475, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[20,40], delight:9,
+ via:{hub:HUB_CAMPUSP, ride:16, egress:5, mode:"the 31 or 32 bus"},
+ blurb:"An eighteen-foot concrete troll crushing a real Volkswagen Beetle under a bridge. Climb it. Everyone climbs it.",
+ tip:"Fremont's centre is five minutes downhill if your gap can take it."},
+
+{id:"greenlake", name:"Do a lap of Green Lake", area:"Green Lake",
+ addr:"Green Lake Park, Seattle WA",
+ mood:"outdoors", tags:["social"], lat:47.6806, lng:-122.3277, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[55,80], delight:8,
+ via:{hub:HUB_UDIST, ride:5, egress:12, mode:"the Link to Roosevelt"},
+ blurb:"A flat 2.8-mile loop around the water, permanently full of runners, dogs and people on strange wheeled devices. Hard to feel bad doing it.",
+ tip:"The inner path is for walking, the outer for wheels. People are serious about this."},
+
+{id:"arboretum", name:"Cross the floating trail to Foster Island", area:"Arboretum",
+ addr:"Washington Park Arboretum, 2300 Arboretum Dr E, Seattle WA",
+ mood:"outdoors", tags:["quiet"], lat:47.6400, lng:-122.2950, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[45,85], delight:9,
+ blurb:"A waterfront trail on floating boardwalks through marsh and lily pads, with herons and the freeway humming overhead. Genuinely strange and beautiful.",
+ tip:"Start from the Museum of History and Industry end and walk south into the Arboretum."},
+
+{id:"montlake", name:"Watch a boat go through the Montlake Cut", area:"Montlake",
+ addr:"Montlake Bridge, Seattle WA",
+ mood:"outdoors", tags:["quiet"], lat:47.6473, lng:-122.3045, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[20,40], delight:7,
+ blurb:"A hand-dug canal connecting two lakes, with a 1925 drawbridge that opens on demand. Stand on the south bank and wait for the bells.",
+ tip:"The bridge opens for any tall enough boat. Traffic hates it; you have nowhere to be."},
+
+/* ---- pure challenges ---- */
+{id:"under10", name:"The Ave under-ten challenge", area:"The Ave",
+ addr:"University Way NE, Seattle WA",
+ mood:"food", tags:["social","outdoors"], lat:47.6595, lng:-122.3130, indoor:false, openness:"restaurant",
+ cost:[7,10], act:[30,50], delight:8,
+ blurb:"Walk the Ave from 42nd to 50th and eat the best meal you can build for under ten dollars. You're allowed exactly two stops.",
+ tip:"The optimal play involves one savoury stop and one thing sweet you weren't planning on."},
+
+{id:"quadphoto", name:"Photograph the Quad from a spot you've never stood in", area:"Central campus",
+ addr:"Liberal Arts Quadrangle, University of Washington, Seattle WA",
+ mood:"outdoors", tags:["quiet"], lat:47.6572, lng:-122.3070, indoor:false, openness:"outdoor",
+ cost:[0,0], act:[15,30], delight:7,
+ blurb:"Thirty Yoshino cherry trees planted in 1962. In late March it's unbearable; the rest of the year it's a Gothic courtyard nobody photographs properly.",
+ tip:"Go up the steps at the south end and shoot back through the arches instead of at the trees."},
+
+{id:"onestop", name:"Ride the Link one stop and walk back", area:"U District",
+ addr:"U District Station, Brooklyn Ave NE, Seattle WA",
+ mood:"social", tags:["outdoors","quiet"], lat:47.6605, lng:-122.3137, indoor:false, openness:"outdoor",
+ cost:[0,3], act:[35,60], delight:8,
+ blurb:"Take the train one stop to Roosevelt, get out, and walk back through a neighbourhood you've only ever passed through underground.",
+ tip:"Roosevelt has a good record shop and a bakery on the way back. Tap your card properly."}
+];
+
+
+/* ---------- src/lib/hours.js ---------- */
+// Is it open when you'd get there, and open long enough to be worth it.
+// Owner: dataset + recommendation logic.
+
+// Google hours win; these profiles are the fallback. They are category
+// estimates, not verified times — enough to stop us sending someone to a
+// bookshop at 9pm, not enough to promise it's open at 6:55.
+//
+// Minutes from midnight, weekday 0 = Sunday.
+const ALL_WEEK = [0, 1, 2, 3, 4, 5, 6];
+const hhmm = (h, m = 0) => h * 60 + m;
+
+const PROFILES = {
+  outdoor: { open: hhmm(0), close: hhmm(24), days: ALL_WEEK, note: "any time" },
+
+  // card-access outside these hours
+  campus: { open: hhmm(7), close: hhmm(22), days: [1, 2, 3, 4, 5], weekend: { open: hhmm(9), close: hhmm(18) }, note: "term-time building hours" },
+
+  library: { open: hhmm(8), close: hhmm(22), days: ALL_WEEK, weekend: { open: hhmm(10), close: hhmm(20) }, note: "library hours" },
+
+  cafe: { open: hhmm(7), close: hhmm(18), days: ALL_WEEK, note: "café hours" },
+
+  restaurant: { open: hhmm(11), close: hhmm(21), days: ALL_WEEK, note: "kitchen hours" },
+
+  shop: { open: hhmm(10), close: hhmm(19), days: ALL_WEEK, note: "shop hours" },
+
+  museum: { open: hhmm(10), close: hhmm(17), days: [0, 2, 3, 4, 5, 6], note: "closed Mondays" },
+
+  gym: { open: hhmm(6), close: hhmm(22), days: [1, 2, 3, 4, 5], weekend: { open: hhmm(8), close: hhmm(20) }, note: "IMA hours" },
+
+  evening: { open: hhmm(19), close: hhmm(22), days: [1, 3, 5], note: "open evenings only" },
+
+  boathouse: { open: hhmm(10), close: hhmm(18), days: ALL_WEEK, note: "daylight hours, seasonal" },
+};
+
+// Periods for a day as [[open, close], ...]; "always" = never shuts, null =
+// closed today. Authority: Google, then hand-written override, then profile.
+// `venues` is injectable so tests can use a fixture.
+function periodsFor(quest, day, venues = VENUES) {
+  const v = venues[quest.id];
+  if (v && v.hours) {
+    if (v.hours === "always") return "always";
+    const today = v.hours[day];
+    if (!today) return null;                  // unknown
+    return today.length ? today : null;       // [] = shut today
+  }
+
+  if (quest.hours) {
+    if (quest.hours.days && !quest.hours.days.includes(day)) return null;
+    return [[quest.hours.open, quest.hours.close]];
+  }
+
+  const p = PROFILES[quest.openness || "outdoor"];
+  if (!p) return "always";
+  if (p.days && !p.days.includes(day)) return null;
+  const weekend = day === 0 || day === 6;
+  const w = weekend && p.weekend ? { ...p, ...p.weekend } : p;
+  if (w.close - w.open >= 24 * 60) return "always";
+  return [[w.open, w.close]];
+}
+
+function alwaysOpen(quest, venues = VENUES) {
+  const v = venues[quest.id];
+  if (v && v.hours) return v.hours === "always";
+  return (quest.openness || "outdoor") === "outdoor" && !quest.hours;
+}
+
+// Shown to the user, so they know whether to trust the times.
+function hoursSource(quest, venues = VENUES) {
+  return venues[quest.id]?.hours ? "google" : "estimated";
+}
+
+/**
+ * How long you could stay, given when you'd arrive.
+ * Returns the latest you could leave (minutes from midnight), or null if it
+ * is shut when you get there.
+ */
+function closingTime(quest, arrivalMinutes, day, venues = VENUES) {
+  const periods = periodsFor(quest, day, venues);
+  if (!periods) return null;
+  if (periods === "always") return arrivalMinutes + 24 * 60;
+  for (const [open, close] of periods) {      // lunch breaks mean 2 periods
+    if (arrivalMinutes >= open && arrivalMinutes < close) return close;
+  }
+  return null;   // shut on arrival; we don't make people wait
+}
+
+function clock(mins) {
+  const h = Math.floor(mins / 60), m = mins % 60;
+  const ampm = h >= 12 ? "pm" : "am";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return h12 + (m ? ":" + String(m).padStart(2, "0") : "") + ampm;
+}
+
+function hoursNote(quest, day, venues = VENUES) {
+  const periods = periodsFor(quest, day, venues);
+  if (periods === "always") return "any time";
+  if (!periods) return "shut today";
+
+  if (hoursSource(quest, venues) === "google") {
+    const [open, close] = periods[0];
+    return clock(open) + "–" + clock(periods[periods.length - 1][1] === close
+      ? close : periods[periods.length - 1][1]);
+  }
+  if (quest.hours) return quest.hours.note || "check hours";
+  const p = PROFILES[quest.openness || "outdoor"];
+  return (p ? p.note : "check hours") + ", estimated";
+}
+
+
+function nowParts(date = new Date()) {
+  return { minutes: date.getHours() * 60 + date.getMinutes(), day: date.getDay() };
+}
+
+
+/* ---------- src/lib/travel.js ---------- */
+// Travel time, and whether a quest physically fits the gap.
+// Owner: dataset + recommendation logic.
+// No opinion about which quest is *good* — that's recommend.js.
+
+/* --- geometry --- */
+function haversine(a,b){
+  var R=6371000, t=Math.PI/180;
+  var dLat=(b.lat-a.lat)*t, dLng=(b.lng-a.lng)*t;
+  var la1=a.lat*t, la2=b.lat*t;
+  var h=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+// From calibration.js; `npm run calibrate` fits these to real routes.
+const WALK_M_PER_MIN = CALIBRATION.speedMetresPerMinute;
+const DETOUR = CALIBRATION.factor;
+
+function walkMinutes(a,b){
+  return Math.max(1, Math.round(haversine(coords(a),coords(b))*DETOUR/WALK_M_PER_MIN));
+}
+
+/* Google's coords beat our hand-typed ones when we have them. */
+function coords(p){
+  var v = p && p.id ? VENUES[p.id] : null;
+  return (v && typeof v.lat === "number") ? v : p;
+}
+
+/* Travel is the faster of walking the whole way or bussing/training via a hub. */
+function travelFor(q, start){
+  var w = walkMinutes(start, q);
+  var best = { minutes:w, mode:"walk" };
+  if(q.via){
+    var t = walkMinutes(start, q.via.hub) + q.via.ride + q.via.egress;
+    if(t < w) best = { minutes:t, mode:q.via.mode };
+  }
+  return best;
+}
+
+const BUFFER = 5; // minutes of "don't miss your next class" slack, always reserved
+
+/* How long you'd actually spend there given the gap, or null if it can't be done. */
+function planFor(q, start, gapMinutes, now){
+  var travel = travelFor(q, start);
+  var room = gapMinutes - travel.minutes*2 - BUFFER;
+  if(room < q.act[0]) return null;
+  var stay = Math.min(q.act[1], room);
+
+  // Closing time is a second ceiling on the visit. Shut on arrival = dropped,
+  // not shown with a caveat.
+  var closes = null;
+  if(now){
+    var arrival = now.minutes + travel.minutes;
+    var close = closingTime(q, arrival, now.day);
+    if(close === null) return null;
+    stay = Math.min(stay, close - arrival);
+    if(stay < q.act[0]) return null;
+    // null, not the +24h sentinel — that leaked into the UI as "until 7:58pm"
+    // on a park that never shuts.
+    closes = alwaysOpen(q) ? null : close;
+  }
+
+  var total = travel.minutes*2 + stay;
+  return {
+    travel: travel.minutes,
+    mode: travel.mode,
+    stay: stay,
+    total: total,
+    spare: gapMinutes - total,
+    closes: closes,
+    tight: (gapMinutes - travel.minutes*2 - q.act[0]) < 10
+  };
+}
+
+
+
+/* ---------- src/lib/locate.js ---------- */
+// "im outside odegard" -> coordinates, no network.
+// Owner: dataset + recommendation logic.
+//
+// Four passes, cheapest first. Below the confidence bar we return suggestions
+// instead of a guess — wrong guesses send people across campus.
+
+
+// Carry no location information.
+const NOISE = new Set([
+  "im", "i'm", "at", "in", "the", "near", "by", "outside", "inside", "front",
+  "of", "a", "an", "hall", "building", "bldg", "uw", "on", "next", "to",
+  "just", "left", "leaving", "class", "lecture", "room", "library",
+]);
+
+function normalise(s) {
+  return String(s).toLowerCase().replace(/[^a-z0-9\s']/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function tokens(s) {
+  return normalise(s).split(" ").filter((t) => t && !NOISE.has(t));
+}
+
+// Levenshtein, capped: we only want near-misses, so bail early.
+function editDistance(a, b, cap) {
+  if (Math.abs(a.length - b.length) > cap) return cap + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    let best = i;
+    for (let j = 1; j <= b.length; j++) {
+      row[j] = Math.min(
+        prev[j] + 1,
+        row[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+      if (row[j] < best) best = row[j];
+    }
+    if (best > cap) return cap + 1;
+    prev = row;
+  }
+  return prev[b.length];
+}
+
+// "mgh" -> exact | "odegard" -> close | "hall" -> { place: null, suggestions }
+function locate(input) {
+  const typed = String(input || "").trim();
+  const norm = normalise(typed);
+  if (!norm) return { place: null, suggestions: [], typed };
+
+  // 1. whole string is a known name or alias
+  if (ALIAS_INDEX.has(norm)) {
+    return { place: PLACES[ALIAS_INDEX.get(norm)], confidence: "exact", typed };
+  }
+
+  // 2. alias inside a sentence; longest wins ("u district station" > "u district")
+  let best = null;
+  for (const [alias, idx] of ALIAS_INDEX) {
+    if (alias.length < 3) continue;
+    if (norm.includes(alias) && (!best || alias.length > best.alias.length)) {
+      best = { alias, idx };
+    }
+  }
+  if (best) return { place: PLACES[best.idx], confidence: "exact", typed };
+
+  // 3. token overlap: word order and extra words don't matter
+  const want = tokens(typed);
+  if (want.length) {
+    const scored = PLACES.map((p, i) => {
+      const hay = tokens(p.name + " " + p.aliases.join(" "));
+      let hits = 0;
+      for (const w of want) {
+        if (hay.some((h) => h === w || (w.length > 3 && h.startsWith(w)))) hits++;
+      }
+      return { i, score: hits / want.length };
+    }).filter((x) => x.score > 0).sort((a, b) => b.score - a.score);
+
+    // A tie is ambiguity, not a winner: "gates" matches Mary Gates Hall and
+    // the Gates Center equally, and they're a quarter-mile apart.
+    const tied = scored.filter((x) => x.score === scored[0].score);
+    if (tied.length === 1 && scored[0].score >= 0.75) {
+      return { place: PLACES[scored[0].i], confidence: "close", typed };
+    }
+    if (tied.length > 1 && scored[0].score >= 0.75) {
+      return { place: null, typed, suggestions: tied.slice(0, 4).map((x) => PLACES[x.i]) };
+    }
+    if (scored.length) {
+      return { place: null, typed, suggestions: scored.slice(0, 4).map((x) => PLACES[x.i]) };
+    }
+  }
+
+  // 4. spelling: "suzallo", "odegard"
+  const cap = norm.length <= 5 ? 1 : norm.length <= 9 ? 2 : 3;
+  const near = [];
+  for (const [alias, idx] of ALIAS_INDEX) {
+    if (Math.abs(alias.length - norm.length) > cap) continue;
+    const d = editDistance(norm, alias, cap);
+    if (d <= cap) near.push({ idx, d });
+  }
+  near.sort((a, b) => a.d - b.d);
+  if (near.length === 1 || (near.length && near[0].d === 1)) {
+    return { place: PLACES[near[0].idx], confidence: "close", typed };
+  }
+  if (near.length) {
+    const seen = new Set();
+    const suggestions = [];
+    for (const n of near) {
+      if (seen.has(n.idx)) continue;
+      seen.add(n.idx);
+      suggestions.push(PLACES[n.idx]);
+      if (suggestions.length === 4) break;
+    }
+    return { place: null, typed, suggestions };
+  }
+
+  return { place: null, typed, suggestions: [] };
+}
+
+
+/* ---------- src/lib/recommend.js ---------- */
+// Ranking. Filters in, ordered list out.
+// Owner: dataset + recommendation logic.
+//
+// CONTRACT with the interface (agreed day 1, see DECISIONS.md #1):
+//   recommend(filters) -> [{ quest, plan, score, why }] sorted best first
+//   filters = { gap, budget, mood, setting, start, now, seed, exclude }
+//             setting: "indoors" | "outdoors" | "either"
+//             start:   a { lat, lng } — the UI resolves free text before calling
+//             now:     { minutes, day } or null to ignore opening hours
+//   plan    = { travel, mode, stay, total, spare, tight, closes }
+//   why     = [[human-readable reason, "+points"], ...]
+// The UI never recomputes anything from a quest: every number on screen comes
+// out of `plan` or `why`.
+
+
+/* Deterministic jitter; real variety comes from `exclude`. */
+function hash(str){
+  var h=2166136261;
+  for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); }
+  return ((h>>>0)%1000)/1000;
+}
+
+function scoreQuest(q, plan, f){
+  var parts = [];
+  var s = 0;
+
+  if(q.mood === f.mood){ s += 42; parts.push(["Exactly the mood you picked","+42"]); }
+  else if(q.tags.indexOf(f.mood) !== -1){ s += 22; parts.push(["Close enough to your mood","+22"]); }
+
+  // Use most of the gap without sprinting for it.
+  var use = plan.total / f.gap;
+  var fit = 1 - Math.min(1, Math.abs(use - 0.78) / 0.55);
+  var timePts = Math.round(26 * fit);
+  s += timePts;
+  parts.push(["Fills the gap without rushing","+" + timePts]);
+
+  // Budget.
+  if(f.budget === 0 && q.cost[1] === 0){ s += 14; parts.push(["Completely free","+14"]); }
+  else if(q.cost[1] <= f.budget){ s += 12; parts.push(["Comfortably inside your budget","+12"]); }
+  else if(q.cost[0] <= f.budget){ s += 5; parts.push(["Doable if you order carefully","+5"]); }
+
+  // Weather.
+  if(f.setting === "either"){
+    // Nudge outside when they didn't care; anyone who did already said so.
+    if(!q.indoor){ s += 8; parts.push(["Worth being outside for","+8"]); }
+  }
+
+  // Tiebreak only.
+  var d = Math.round(q.delight * 1.2);
+  s += d;
+  if(q.delight >= 8) parts.push(["One of the good ones","+" + d]);
+
+  // Right on the edge of the clock.
+  if(plan.tight){ s -= 8; parts.push(["Cutting it a bit fine","-8"]); }
+
+  s += Math.round(hash(q.id + "|" + f.seed) * 12);
+
+  return { total:s, parts:parts };
+}
+
+function recommend(f){
+  // Either a known start id or a { lat, lng } resolved from free text.
+  var start = f.start;
+  if(typeof start === "string"){
+    start = null;
+    for(var i=0;i<STARTS.length;i++){ if(STARTS[i].id === f.start) start = STARTS[i]; }
+  }
+  if(!start || typeof start.lat !== "number") start = STARTS[0];
+
+  var skip = f.exclude || [];
+  var results = [], excluded = [];
+  for(var j=0;j<QUESTS.length;j++){
+    var q = QUESTS[j];
+    if(q.cost[0] > f.budget) continue;                  // can't afford the floor
+    if(f.setting === "indoors" && !q.indoor) continue;
+    if(f.setting === "outdoors" && q.indoor) continue;
+    var plan = planFor(q, start, f.gap, f.now);
+    if(!plan) continue;                                 // doesn't fit the clock
+    var sc = scoreQuest(q, plan, f);
+    var row = { quest:q, plan:plan, score:sc.total, why:sc.parts };
+    if(skip.indexOf(q.id) !== -1) excluded.push(row); else results.push(row);
+  }
+  // Repeat only if nothing else is left.
+  if(!results.length) results = excluded;
+  results.sort(function(a,b){ return b.score - a.score; });
+  return results;
+}
+
+
+
+/* Nothing fits: find the smallest thing worth relaxing. */
+const GAP_LADDER = [30,60,90,120], BUDGET_LADDER = [0,10,25,40];
+const ALL_MOODS = ["productive","social","quiet","food","outdoors"];
+function loosenings(f){
+  var out = [];
+  function tryPatch(p){
+    var g = {gap:f.gap,budget:f.budget,mood:f.mood,setting:f.setting,
+             start:f.start,now:f.now,seed:f.seed,exclude:f.exclude};
+    for(var k in p){ if(Object.prototype.hasOwnProperty.call(p,k)) g[k]=p[k]; }
+    return recommend(g).length;
+  }
+  if(f.setting !== "either" && tryPatch({setting:"either"}))
+    out.push({ label:"Either indoors or out", patch:{setting:"either"} });
+  if(f.now && tryPatch({now:null}))
+    out.push({ label:"Ignore opening hours", patch:{now:null} });
+  var bi = BUDGET_LADDER.indexOf(f.budget);
+  for(var i=bi+1;i<BUDGET_LADDER.length;i++){
+    if(tryPatch({budget:BUDGET_LADDER[i]})){
+      out.push({ label:"Spend up to $" + BUDGET_LADDER[i], patch:{budget:BUDGET_LADDER[i]} }); break;
+    }
+  }
+  var gi = GAP_LADDER.indexOf(f.gap);
+  for(var j=gi+1;j<GAP_LADDER.length;j++){
+    if(tryPatch({gap:GAP_LADDER[j]})){
+      out.push({ label:"Pretend the gap is " + GAP_LADDER[j] + " minutes", patch:{gap:GAP_LADDER[j]} }); break;
+    }
+  }
+  for(var m=0;m<ALL_MOODS.length;m++){
+    if(ALL_MOODS[m] === f.mood) continue;
+    if(tryPatch({mood:ALL_MOODS[m]}) >= 3){
+      out.push({ label:"Be open to something " + ALL_MOODS[m], patch:{mood:ALL_MOODS[m]} }); break;
+    }
+  }
+  return out.slice(0,3);
+}
+
+
+
+/* ---------- src/ui/app.js ---------- */
+// Interface: collect filters, resolve the location, render the result.
+// Owner: interface + filtering + result cards.
+//
+// Knows nothing about walking speed, scoring or hours. If you're doing
+// arithmetic on a quest in here, the number belongs in `plan` — see the
+// CONTRACT in src/lib/recommend.js.
+
+
+var TIMES = [30, 60, 90, 120];
+var MONEY = [[0, "free"], [10, "$10"], [25, "$25"], [40, "$40"]];
+var MOODS = ["productive", "social", "quiet", "food", "outdoors"];
+var SETTINGS = [["indoors", "indoors"], ["outdoors", "outdoors"], ["either", "either"]];
+
+// Stable catalogue numbers, so a quest keeps its number between sessions.
+var TOTAL = QUESTS.length;
+var QUEST_INDEX = {};
+QUESTS.forEach(function (q, i) { QUEST_INDEX[q.id] = String(i + 1).padStart(2, "0"); });
+
+var state = {
+  gap: 60, budget: 10, mood: "quiet", setting: "either",
+  typed: "Red Square", place: PLACES[0],
+  clock: null,        // "HH:MM", defaults to now
+  seed: 1
+};
+var recent = [];      // already offered this round
+
+try {
+  var saved = JSON.parse(localStorage.getItem("sidequest-uw") || "null");
+  if (saved && typeof saved === "object") {
+    ["gap", "budget", "mood", "setting", "typed"].forEach(function (k) {
+      if (saved[k] !== undefined) state[k] = saved[k];
+    });
+    var again = locate(state.typed);
+    if (again.place) state.place = again.place;
+  }
+} catch (e) { /* private browsing */ }
+
+function save() {
+  try {
+    localStorage.setItem("sidequest-uw", JSON.stringify({
+      gap: state.gap, budget: state.budget, mood: state.mood,
+      setting: state.setting, typed: state.typed
+    }));
+  } catch (e) {}
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  });
+}
+
+/* ---------- clock ---------- */
+function nowMinutes() {
+  if (state.clock) {
+    var bits = state.clock.split(":");
+    return (+bits[0]) * 60 + (+bits[1]);
+  }
+  var d = new Date();
+  return d.getHours() * 60 + d.getMinutes();
+}
+function currentNow() {
+  var p = nowParts();
+  return { minutes: nowMinutes(), day: p.day };
+}
+function clockOf(minutes) {
+  var m = ((minutes % 1440) + 1440) % 1440;
+  var h = Math.floor(m / 60), mm = m % 60;
+  var ampm = h >= 12 ? "pm" : "am";
+  var h12 = h % 12 === 0 ? 12 : h % 12;
+  return h12 + ":" + (mm < 10 ? "0" : "") + mm + ampm;
+}
+
+/* ---------- form ---------- */
+function options(host, items, key, label) {
+  host.innerHTML = "";
+  items.forEach(function (it) {
+    var value = Array.isArray(it) ? it[0] : it;
+    var text = Array.isArray(it) ? it[1] : label ? label(it) : it;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "opt";
+    b.textContent = text;
+    b.setAttribute("data-key", key);
+    b.setAttribute("data-val", String(value));
+    b.setAttribute("aria-pressed", String(state[key] === value));
+    b.addEventListener("click", function () {
+      state[key] = value;
+      Array.prototype.forEach.call(host.children, function (c) {
+        c.setAttribute("aria-pressed", "false");
+      });
+      b.setAttribute("aria-pressed", "true");
+      save();
+    });
+    host.appendChild(b);
+  });
+}
+
+options(document.getElementById("v-gap"), TIMES, "gap", function (t) { return t + " min"; });
+options(document.getElementById("v-budget"), MONEY, "budget");
+options(document.getElementById("v-mood"), MOODS, "mood");
+options(document.getElementById("v-setting"), SETTINGS, "setting");
+
+// Native autocomplete, so the common case needs no JS.
+var list = document.getElementById("places");
+PLACES.forEach(function (p) {
+  var o = document.createElement("option");
+  o.value = p.name;
+  list.appendChild(o);
+});
+
+var where = document.getElementById("where");
+var resolved = document.getElementById("resolved");
+where.value = state.typed;
+
+var simplify = function (s) { return String(s).toLowerCase().replace(/[^a-z0-9]/g, ""); };
+
+function showResolved(result) {
+  if (result.place) {
+    // Echo unless they typed the name itself; "mgh" with no feedback leaves
+    // you guessing whether it landed.
+    resolved.innerHTML = simplify(result.typed) === simplify(result.place.name)
+      ? ""
+      : "Reading that as <b>" + esc(result.place.name) + "</b>.";
+    return;
+  }
+  if (result.suggestions && result.suggestions.length) {
+    resolved.innerHTML = "Did you mean:" +
+      '<span class="guesses">' + result.suggestions.map(function (p) {
+        return '<button type="button" data-place="' + esc(p.name) + '">' + esc(p.name) + "</button>";
+      }).join("") + "</span>";
+    Array.prototype.forEach.call(resolved.querySelectorAll("[data-place]"), function (btn) {
+      btn.addEventListener("click", function () {
+        where.value = btn.getAttribute("data-place");
+        resolveWhere(true);
+        where.focus();
+      });
+    });
+    return;
+  }
+  resolved.innerHTML = "Don't know that one. Try a building name, or " +
+    "<b>" + esc(PLACES[0].name) + "</b>.";
+}
+
+var lastResolved = null;
+
+function resolveWhere(force) {
+  // Blur fires before a click on the suggestion buttons; re-rendering here
+  // detaches them mid-click. Unchanged input is a no-op.
+  if (!force && where.value === lastResolved) return null;
+  lastResolved = where.value;
+  state.typed = where.value;
+  var result = locate(where.value);
+  if (result.place) state.place = result.place;
+  showResolved(result);
+  save();
+  return result;
+}
+where.addEventListener("change", function () { resolveWhere(); });
+where.addEventListener("blur", function () { resolveWhere(); });
+
+var clockInput = document.getElementById("clock");
+(function initClock() {
+  var p = nowParts();
+  var h = Math.floor(p.minutes / 60), m = p.minutes % 60;
+  clockInput.value = (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+})();
+clockInput.addEventListener("change", function () {
+  state.clock = clockInput.value || null;
+});
+
+/* ---------- render ---------- */
+// Ticking clock: the whole app is about time, so show it moving.
+(function tick() {
+  var el = document.getElementById("tick");
+  if (!el) return;
+  var paint = function () { el.textContent = clockOf(nowMinutes()); };
+  paint();
+  setInterval(paint, 15000);
+})();
+
+// Say how stale the data is; nobody should assume it's live.
+(function freshness() {
+  var el = document.getElementById("freshness");
+  if (!el) return;
+  var n = Object.keys(VENUES).length;
+  el.textContent = ENRICHED_AT
+    ? n + " venues, hours checked " + ENRICHED_AT
+    : "57 places, hours estimated";
+})();
+
+var out = document.getElementById("out");
+var lastResults = [];
+
+function filters() {
+  return {
+    gap: state.gap, budget: state.budget, mood: state.mood, setting: state.setting,
+    start: state.place, now: currentNow(), seed: state.seed, exclude: recent
+  };
+}
+
+function syncForm() {
+  Array.prototype.forEach.call(document.querySelectorAll(".opt"), function (c) {
+    var k = c.getAttribute("data-key");
+    c.setAttribute("aria-pressed", String(String(state[k]) === c.getAttribute("data-val")));
+  });
+}
+
+function run() {
+  lastResults = recommend(filters());
+  render(lastResults, 0);
+}
+
+function money(cost) {
+  if (cost[1] === 0) return "free";
+  if (cost[0] === 0) return "under $" + cost[1];
+  if (cost[0] === cost[1]) return "$" + cost[0];
+  return "$" + cost[0] + "–" + cost[1];
+}
+
+function mapsUrl(q) {
+  // place id pins the exact venue; address text can hit the wrong branch.
+  var v = VENUES[q.id];
+  var url = "https://www.google.com/maps/dir/?api=1&destination=" +
+    encodeURIComponent(v && v.name ? v.name + ", Seattle WA" : q.addr);
+  if (v && v.placeId) url += "&destination_place_id=" + encodeURIComponent(v.placeId);
+  return url;
+}
+
+function render(results, idx) {
+  if (!results.length) {
+    var ways = loosenings(filters());
+    out.innerHTML = '<div class="empty"><b>Nothing fits that exactly.</b>' +
+      "<p>" + (ways.length
+        ? "Relax one thing and there's plenty."
+        : "Try a longer gap or a different mood.") + "</p>" +
+      (ways.length ? '<div class="actions">' + ways.map(function (w, i) {
+        return '<button class="again" type="button" data-loosen="' + i + '">' +
+          esc(w.label) + "</button>";
+      }).join("") + "</div>" : "") + "</div>";
+
+    Array.prototype.forEach.call(out.querySelectorAll("[data-loosen]"), function (btn) {
+      btn.addEventListener("click", function () {
+        var w = ways[+btn.getAttribute("data-loosen")];
+        for (var k in w.patch) {
+          if (Object.prototype.hasOwnProperty.call(w.patch, k)) state[k] = w.patch[k];
+        }
+        syncForm(); save(); run();
+      });
+    });
+    return;
+  }
+
+  var r = results[idx], q = r.quest, p = r.plan;
+  var start = nowMinutes();
+  var arrive = start + p.travel;
+  var leave = arrive + p.stay;
+  var back = leave + p.travel;
+
+  // Say so rather than quietly handing over a different mood.
+  var fallback = q.mood === state.mood
+    ? ""
+    : '<p class="fallback">Nothing ' + esc(state.mood) + " fits this gap from here" +
+      (state.setting !== "either" ? " " + esc(state.setting) : "") +
+      ", so here's the closest thing that does.</p>";
+
+  var pct = function (m) { return (m / state.gap * 100).toFixed(2) + "%"; };
+  var spare = Math.max(0, state.gap - p.total);
+
+  var alts = results.slice(0, 6).filter(function (x, i) { return i !== idx; }).slice(0, 3);
+
+  var num = QUEST_INDEX[q.id];
+
+  out.innerHTML =
+    '<div class="panel"><article class="result"><div class="panel-in">' +
+      '<p class="idx"><span>no. ' + num + " / " + TOTAL + "</span>" +
+        "<span>" + esc(q.area.toLowerCase()) + "</span></p>" +
+      '<p class="tags"><i>' + esc(q.mood) + "</i><s>/</s>" +
+        (p.mode === "walk" ? "on foot" : esc(p.mode)) +
+        "<s>/</s>" + esc(hoursNote(q, currentNow().day)) + "</p>" +
+      "<h2>" + esc(q.name) + "</h2>" +
+      fallback +
+      '<p class="blurb">' + esc(q.blurb) + "</p>" +
+
+      '<div class="gap-bar" role="img" aria-label="' +
+        p.travel + " minutes there, " + p.stay + " minutes at the quest, " +
+        p.travel + " minutes back, " + spare + ' minutes spare">' +
+        '<span class="walk" style="width:' + pct(p.travel) + '"></span>' +
+        '<span class="stay" style="width:' + pct(p.stay) + '"></span>' +
+        '<span class="walk" style="width:' + pct(p.travel) + '"></span>' +
+        '<span class="spare" style="width:' + pct(spare) + '"></span>' +
+      "</div>" +
+      '<p class="clock"><span>leave <b>' + clockOf(start) + "</b></span>" +
+        "<span>there " + clockOf(arrive) + "–" + clockOf(leave) + "</span>" +
+        "<span>back <b>" + clockOf(back) + "</b>, " + spare + " to spare</span></p>" +
+
+      '<div class="facts">' +
+        '<div><span class="n">' + p.travel + ' min</span><span class="k">each way</span></div>' +
+        '<div><span class="n">' + p.stay + ' min</span><span class="k">there</span></div>' +
+        '<div><span class="n">' + esc(money(q.cost)) + '</span><span class="k">roughly</span></div>' +
+        '<div><span class="n">' + (q.indoor ? "indoors" : "outdoors") + '</span><span class="k">' +
+          (p.closes ? "until " + clockOf(p.closes) : "any time") + "</span></div>" +
+      "</div>" +
+
+      '<p class="tip"><b>Insider bit.</b> ' + esc(q.tip) + "</p>" +
+
+      '<div class="actions">' +
+        '<a class="go-maps" href="' + mapsUrl(q) + '" target="_blank" rel="noopener">Open in Maps</a>' +
+        '<button class="again" type="button" id="reroll">Something else</button>' +
+      "</div>" +
+
+      '<details class="why"><summary>Why this one</summary><ul>' +
+        r.why.map(function (w) {
+          return "<li><span>" + esc(w[0]) + "</span><b>" + esc(w[1]) + "</b></li>";
+        }).join("") +
+        "<li><span>Out of " + results.length + " that fit right now</span><b>" + r.score + "</b></li>" +
+      "</ul></details>" +
+    "</div></article></div>" +
+    (alts.length
+      ? '<div class="alts"><p class="k">Also possible</p>' + alts.map(function (a, i) {
+          return '<button class="alt" type="button" data-id="' + esc(a.quest.id) + '">' +
+            '<span class="no">' + String(i + 1).padStart(2, "0") + "</span>" +
+            '<span class="an">' + esc(a.quest.name) + "</span>" +
+            '<span class="am">' + a.plan.total + " min, " + esc(money(a.quest.cost)) + "</span>" +
+          "</button>";
+        }).join("") + "</div>"
+      : "");
+
+  var rr = document.getElementById("reroll");
+  if (rr) rr.addEventListener("click", function () {
+    state.seed++;
+    recent.push(q.id);
+    if (recent.length > 8) recent.shift();
+    run();
+    out.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  Array.prototype.forEach.call(out.querySelectorAll(".alt"), function (btn) {
+    btn.addEventListener("click", function () {
+      var id = btn.getAttribute("data-id");
+      for (var i = 0; i < lastResults.length; i++) {
+        if (lastResults[i].quest.id === id) {
+          if (recent.indexOf(q.id) === -1) recent.push(q.id);
+          render(lastResults, i);
+          break;
+        }
+      }
+      out.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+}
+
+document.getElementById("form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  resolveWhere(true);
+  state.seed++;
+  recent = [];
+  run();
+});
+
+})();
+</script>
+<script>
+  // Offline support. Harmless where it isn't available (file://, older browsers).
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
+</script>
+</body>
+</html>
